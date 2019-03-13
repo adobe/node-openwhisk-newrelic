@@ -14,7 +14,9 @@
     "url": "https://git.corp.adobe.com/nui/newrelic-metrics.git"
   },
   "dependencies": {
+    "datalib": "^1.9.2",
     "fs-extra": "^7.0.1",
+    "interval-promise": "^1.3.0",
     "request": "^2.88.0"
   },
   "devDependencies": {

@@ -17,30 +17,10 @@
 
 'use strict';
 
-class Metrics {
-
-    start(name, metrics, send) {
-
-    }
-
-    success(name, metrics) {
-
-    }
-
-    error(name, metrics, error) {
-
-    }
-
-    send() {
-
-    }
-
-    measure(name, f) {
-        
-    }
-
-}
+const { Agent } = require('./lib/agent');
+const { Sampler } = require('./lib/sampler');
 
 module.exports = {
-    Metrics
+    Agent,
+    Sampler
 }
