@@ -138,24 +138,32 @@ describe("instrument", () => {
         const metrics = {};
         const result = await instrument({
             execute: arg => arg,
-            metrics: (_, result) => {
-                return { result }
+            metrics: (_, result, metrics) => {
+                return { result, metrics }
             }
         }, metrics).execute(100);
         assert.strictEqual(result, 100);
-        assert.deepStrictEqual(Object.getOwnPropertyNames(metrics), ["start", "end", "duration", "result"]);
+        assert.deepStrictEqual(Object.getOwnPropertyNames(metrics), ["start", "end", "duration", "result", "metrics"]);
+        assert.strictEqual(metrics.end - metrics.start, metrics.duration);
         assert.strictEqual(metrics.result, 100);
+        assert.strictEqual(metrics.metrics.start, metrics.start);
+        assert.strictEqual(metrics.metrics.end, metrics.end);
+        assert.strictEqual(metrics.metrics.duration, metrics.duration);
     });
     it("async-worker-metrics-result", async () => {
         const metrics = {};
         const result = await instrument({
             execute: async arg => arg,
-            metrics: async (_, result) => {
-                return { result }
+            metrics: async (_, result, metrics) => {
+                return { result, metrics }
             }
         }, metrics).execute(100);
         assert.strictEqual(result, 100);
-        assert.deepStrictEqual(Object.getOwnPropertyNames(metrics), ["start", "end", "duration", "result"]);
+        assert.deepStrictEqual(Object.getOwnPropertyNames(metrics), ["start", "end", "duration", "result", "metrics"]);
+        assert.strictEqual(metrics.end - metrics.start, metrics.duration);
         assert.strictEqual(metrics.result, 100);
+        assert.strictEqual(metrics.metrics.start, metrics.start);
+        assert.strictEqual(metrics.metrics.end, metrics.end);
+        assert.strictEqual(metrics.metrics.duration, metrics.duration);
     });
 });
