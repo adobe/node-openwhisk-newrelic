@@ -166,4 +166,34 @@ describe("instrument", () => {
         assert.strictEqual(metrics.metrics.end, metrics.end);
         assert.strictEqual(metrics.metrics.duration, metrics.duration);
     });
+    it("async-worker-sampler", async () => {
+        const metrics = {};
+        let counter = 0;
+        const result = await instrument({
+            execute: asyncTimeout,
+            metrics: (_, result) => {
+                return { result }
+            },
+            sample: () => {
+                return ++counter;
+            },
+            sampleInterval: 200
+        }, metrics, "name").execute(1700);
+        assert.strictEqual(result, 1700);
+        const flatten = Metrics.flatten(metrics);
+        assert.deepStrictEqual(Object.getOwnPropertyNames(flatten), [
+            "name_start", "name_end", "name_duration", 
+            "name_min", "name_max", "name_mean", "name_stdev", "name_median", "name_q1", "name_q3", 
+            "name_result"
+        ]);
+        assert.strictEqual(flatten.name_end - flatten.name_start, flatten.name_duration);
+        assert.strictEqual(flatten.name_min, 1);
+        assert.strictEqual(flatten.name_max, 8);
+        assert.strictEqual(flatten.name_mean, 4.5);
+        assert.strictEqual(Math.round(flatten.name_stdev * 1000) / 1000, 2.449);
+        assert.strictEqual(flatten.name_median, 4.5);
+        assert.strictEqual(flatten.name_q1, 2.75);
+        assert.strictEqual(flatten.name_q3, 6.25);
+        assert.strictEqual(flatten.name_result, 1700);
+    })
 });
