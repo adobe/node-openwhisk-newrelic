@@ -78,4 +78,67 @@ describe("metrics", () => {
         });
         delete process.env.__OW_ACTIVATION_ID;
     })
+    it("summary-numbers", () => {
+        const summary = Metrics.summary([1, 2, 3, 4, 5, 6, 7, 8]);
+        // limit stdev to 3 digits after the dot for comparison
+        summary.stdev = Math.round(summary.stdev * 1000) / 1000;
+        assert.deepStrictEqual(summary, {
+            max: 8,
+            mean: 4.5,
+            median: 4.5,
+            min: 1,
+            q1: 2.75,
+            q3: 6.25,
+            stdev: 2.449
+        });
+    })
+    it("summary-objects", () => {
+        const summary = Metrics.summary([{
+            counter: 1,
+            constant: 5
+        }, {
+            counter: 2,
+            constant: 5
+        }, {
+            counter: 3,
+            constant: 5
+        }, {
+            counter: 4,
+            constant: 5
+        }, {
+            counter: 5,
+            constant: 5
+        }, {
+            counter: 6,
+            constant: 5
+        }, {
+            counter: 7,
+            constant: 5
+        }, {
+            counter: 8,
+            constant: 5
+        }]);
+        // limit stdev to 3 digits after the dot for comparison
+        summary.counter.stdev = Math.round(summary.counter.stdev * 1000) / 1000;
+        assert.deepStrictEqual(summary, {
+            counter: {
+                max: 8,
+                mean: 4.5,
+                median: 4.5,
+                min: 1,
+                q1: 2.75,
+                q3: 6.25,
+                stdev: 2.449
+            },
+            constant: {
+                max: 5,
+                mean: 5,
+                median: 5,
+                min: 5,
+                q1: 5,
+                q3: 5,
+                stdev: 0
+            }
+        });
+    })
 })
