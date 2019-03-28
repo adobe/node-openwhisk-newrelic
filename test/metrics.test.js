@@ -172,7 +172,8 @@ describe("metrics", () => {
             assert.deepStrictEqual(flatten, { value: 1 });
         });
         it("bigint", () => {
-            const value = 1n;
+            // eslint-disable-next-line no-undef
+            const value = BigInt(1);
             const flatten = Metrics.flatten({ value });
             assert.deepStrictEqual(flatten, { value: "1" });
         });
@@ -249,7 +250,7 @@ describe("metrics", () => {
             });
         });
         it("error", () => {
-            let e = Error("error message");
+            const e = Error("error message");
             const flatten = Metrics.flatten({ e });
             assert.deepStrictEqual(flatten, { 
                 e_name: "Error",
@@ -275,7 +276,7 @@ describe("metrics", () => {
         it("not-iterable", () => {
             try {
                 const x = 5
-                for (const a of x) {}
+                for (const a of x) { a; }
             } catch (e) {
                 const flatten = Metrics.flatten({ e });
                 assert.deepStrictEqual(flatten, { 
