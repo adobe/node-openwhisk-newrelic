@@ -177,7 +177,7 @@ describe("instrument", () => {
             sample: () => {
                 return ++counter;
             },
-            sampleInterval: 200
+            sampleInterval: () => 200
         }, metrics, "name").execute(1700);
         assert.strictEqual(result, 1700);
         const flatten = Metrics.flatten(metrics);
@@ -196,26 +196,36 @@ describe("instrument", () => {
         assert.strictEqual(flatten.name_q3, 6.25);
         assert.strictEqual(flatten.name_result, 1700);
     })
-    it("async-worker-sampler-object", async () => {
+    it("async-worker-sampler-class", async () => {
         const metrics = {};
-        let counter = 0;
-        const result = await instrument({
-            execute: asyncTimeout,
-            metrics: (_, result) => {
-                return { result }
-            },
-            sample: () => {
-                return { value: ++counter };
-            },
-            sampleInterval: 200
-        }, metrics, "name").execute(1700);
+        // ensure `this` is available in the methods
+        class Worker {
+            constructor() {
+                this.counter = 0;
+                this.asyncTimeout = asyncTimeout;
+                this.samplingInterval = 200;
+            }
+            async execute(ms) {
+                return this.asyncTimeout(ms);
+            }
+            async metrics(_, result) {
+                return { result, counter: this.counter };
+            }
+            async sample() {
+                return { value: ++this.counter };
+            }
+            async sampleInterval() {
+                return this.samplingInterval;
+            }
+        }
+        const result = await instrument(new Worker(), metrics, "name").execute(1700);
         assert.strictEqual(result, 1700);
         const flatten = Metrics.flatten(metrics);
         assert.deepStrictEqual(Object.getOwnPropertyNames(flatten), [
             "name_start", "name_end", "name_duration", 
             "name_value_min", "name_value_max", "name_value_mean", "name_value_stdev", 
             "name_value_median", "name_value_q1", "name_value_q3", 
-            "name_result"
+            "name_result", "name_counter"
         ]);
         assert.strictEqual(flatten.name_end - flatten.name_start, flatten.name_duration);
         assert.strictEqual(flatten.name_value_min, 1);
@@ -226,5 +236,6 @@ describe("instrument", () => {
         assert.strictEqual(flatten.name_value_q1, 2.75);
         assert.strictEqual(flatten.name_value_q3, 6.25);
         assert.strictEqual(flatten.name_result, 1700);
+        assert.strictEqual(flatten.name_counter, 8);
     })
 });
