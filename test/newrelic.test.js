@@ -23,7 +23,7 @@
 const assert = require("assert");
 const nock = require('nock');
 const zlib = require('zlib');
-const NewRelic = require("../lib/newrelic");
+const NewRelic = require('../lib/newrelic');
 const { promisify } = require('util');
 const sleep = promisify(setTimeout);
 
@@ -83,34 +83,32 @@ describe("AssetComputeMetrics", function() {
 
 
     it("constructor should log but not throw error if no url or api key", async function() {
-        const metrics = new NewRelic();
-        assert.ok(metrics);
+		const metrics = new NewRelic();
+		assert.ok(metrics);
 		await metrics.send();
 		metrics.close();
 	});
 
 	it("sendMetrics", async function() {
-        const nockSendEvent = expectNewRelicInsightsEvent({
-            eventType: EVENT_TYPE,
-            test: "value"
-        });
-        const metrics = new NewRelic(FAKE_PARAMS);
-        await metrics.send(EVENT_TYPE, { test: "value" });
+		const nockSendEvent = expectNewRelicInsightsEvent({
+			eventType: EVENT_TYPE,
+			test: "value"
+		});
+		const metrics = new NewRelic(FAKE_PARAMS);
+		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 		metrics.close();
 	});
 
 	it("sendMetrics - Timeout Metrics", async function() {
-        const nockSendEvent = expectNewRelicInsightsEvent({
-            eventType: "timeout"
-        });
+		const nockSendEvent = expectNewRelicInsightsEvent({
+			eventType: "timeout"
+		});
 
-        process.env.__OW_DEADLINE = Date.now() + 500;
-        new NewRelic( Object.assign( FAKE_PARAMS, {
-			// actionTimeoutCB
-		}));
-        await sleep(1000);
-        assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+		process.env.__OW_DEADLINE = Date.now() + 500;
+		new NewRelic( FAKE_PARAMS );
+		await sleep(1000);
+		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 	});
 
 	it("sendMetrics - Timeout Metrics with callback", async function() {

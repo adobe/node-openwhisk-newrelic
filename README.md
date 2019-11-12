@@ -1,4 +1,6 @@
-# newrelic-metrics
+# openwhisk-newrelic
+
+Library for gathering metrics from Open Whisk actions and sending them to New Relic
 
 ## NewRelic Insert API JSON format guidelines
 
