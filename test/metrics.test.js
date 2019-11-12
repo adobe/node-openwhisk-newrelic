@@ -62,9 +62,18 @@ describe("metrics", () => {
             delete process.env.__OW_ACTION_NAME;
         });
         it("actionName", () => {
-            process.env.__OW_ACTION_NAME = "namespace/action";
+            process.env.__OW_ACTION_NAME = "/namspace/action";
             assert.deepStrictEqual(Metrics.openwhisk(), {
                 actionName: "action"
+            });
+            delete process.env.__OW_ACTION_NAME;
+        });
+
+        it("package", () => {
+            process.env.__OW_ACTION_NAME = "/namspace/package/action";
+            assert.deepStrictEqual(Metrics.openwhisk(), {
+                actionName: "action",
+                package:"package"
             });
             delete process.env.__OW_ACTION_NAME;
         });
