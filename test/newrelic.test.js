@@ -86,7 +86,7 @@ describe("AssetComputeMetrics", function() {
         const metrics = new NewRelic();
         assert.ok(metrics);
 		await metrics.send();
-		metrics.clearActionTimeoutInterval();
+		metrics.close();
 	});
 
 	it("sendMetrics", async function() {
@@ -97,7 +97,7 @@ describe("AssetComputeMetrics", function() {
         const metrics = new NewRelic(FAKE_PARAMS);
         await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-		metrics.clearActionTimeoutInterval();
+		metrics.close();
 	});
 
 	it("sendMetrics - Timeout Metrics", async function() {
@@ -112,20 +112,20 @@ describe("AssetComputeMetrics", function() {
         await sleep(1000);
         assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 	});
-	
+
 	it("sendMetrics - Timeout Metrics with callback", async function() {
-        const nockSendEvent = expectNewRelicInsightsEvent({
+		const nockSendEvent = expectNewRelicInsightsEvent({
 			eventType: "timeout",
 			test: 'add_value'
-        });
+		});
 
-        process.env.__OW_DEADLINE = Date.now() + 500;
-        new NewRelic( Object.assign( FAKE_PARAMS, {
+		process.env.__OW_DEADLINE = Date.now() + 500;
+		new NewRelic( Object.assign( FAKE_PARAMS, {
 			setActionTimeoutMetricsCB: () => {
 				return { test: 'add_value'}
 			}
 		}));
-        await sleep(1000);
-        assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-    });
+		await sleep(1000);
+		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+	});
 });
