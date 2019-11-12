@@ -82,7 +82,7 @@ describe("AssetComputeMetrics", function() {
     })
 
 
-    it("constructor should log but not throw error if no url or api key", async function() {
+	it("constructor should log but not throw error if no url or api key", async function() {
 		const metrics = new NewRelic();
 		assert.ok(metrics);
 		await metrics.send();
@@ -94,6 +94,17 @@ describe("AssetComputeMetrics", function() {
 			eventType: EVENT_TYPE,
 			test: "value"
 		});
+		const metrics = new NewRelic(FAKE_PARAMS);
+		await metrics.send(EVENT_TYPE, { test: "value" });
+		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+		metrics.close();
+	});
+
+	it("sendMetrics - fail with 500 but not throw error", async function() {
+		const nockSendEvent = expectNewRelicInsightsEvent({
+			eventType: EVENT_TYPE,
+			test: "value"
+		}, 500);
 		const metrics = new NewRelic(FAKE_PARAMS);
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
