@@ -1,4 +1,4 @@
-# openwhisk-newrelic
+# node-newrelic-serverless
 
 Library for gathering metrics from Open Whisk actions and sending them to New Relic
 
