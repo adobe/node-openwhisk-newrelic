@@ -1,8 +1,8 @@
 {
-  "name": "@nui/newrelic-metrics",
+  "name": "@nui/openwhisk-newrelic",
   "version": "0.0.2",
   "main": "index.js",
-  "description": "Library for gathering metrics for Open Whisk actions and sending them to NewRelic",
+  "description": "Library for gathering metrics for Apache OpenWhisk actions and sending them to NewRelic",
   "author": {
     "name": "Adobe Systems Inc."
   },
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://git.corp.adobe.com/nui/newrelic-metrics.git"
+    "url": "https://git.corp.adobe.com/nui/node-openwhisk-newrelic.git"
   },
   "dependencies": {
     "datalib": "^1.9.2",
