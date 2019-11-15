@@ -22,7 +22,7 @@
 
 const assert = require("assert");
 const fs = require("fs-extra");
-const Metrics = require("../lib/metrics");
+const Metrics = require('../lib/metrics');
 const process = require("process");
 
 describe("metrics", () => {
@@ -51,31 +51,40 @@ describe("metrics", () => {
         });
     });
     describe("openwhisk", () => {
-        it("empty", () => {
+        it("should return an empty object when no environment variables are set", () => {
             assert.deepStrictEqual(Metrics.openwhisk(), {});
         });
-        it("actionName-simple", () => {
+        it("should return and object with just the action name - simple", () => {
             process.env.__OW_ACTION_NAME = "action";
             assert.deepStrictEqual(Metrics.openwhisk(), {
                 actionName: "action"
             });
             delete process.env.__OW_ACTION_NAME;
         });
-        it("actionName", () => {
-            process.env.__OW_ACTION_NAME = "namespace/action";
+        it("should return an object with just the action name", () => {
+            process.env.__OW_ACTION_NAME = "/namspace/action";
             assert.deepStrictEqual(Metrics.openwhisk(), {
                 actionName: "action"
             });
             delete process.env.__OW_ACTION_NAME;
         });
-        it("namespace", () => {
+
+        it("should return an object with package name and action name", () => {
+            process.env.__OW_ACTION_NAME = "/namspace/package/action";
+            assert.deepStrictEqual(Metrics.openwhisk(), {
+                actionName: "action",
+                package:"package"
+            });
+            delete process.env.__OW_ACTION_NAME;
+        });
+        it("should return an object with the namespace", () => {
             process.env.__OW_NAMESPACE = "namespace";
             assert.deepStrictEqual(Metrics.openwhisk(), {
                 namespace: "namespace"
             });
             delete process.env.__OW_NAMESPACE;
         });
-        it("activationId", () => {
+        it("should return an object with the activationId", () => {
             process.env.__OW_ACTIVATION_ID = "activationId";
             assert.deepStrictEqual(Metrics.openwhisk(), {
                 activationId: "activationId"
