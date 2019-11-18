@@ -128,7 +128,7 @@ describe("metrics", () => {
                 value_key4_nested: "x"
             });
         });
-        it("array", () => {
+        it("array - numbers", () => {
             // 123 should be filtered out
             const flatten = Metrics.flatten({
                 value: [ 1, 2, 3, 4, 5, 6, 7, 8 ]
@@ -136,12 +136,27 @@ describe("metrics", () => {
             console.log(flatten);
             assert.deepStrictEqual(flatten, { value_mean: 4.5 });
         });
-        it("set", () => {
+        it("array - strings", () => {
+            // 123 should be filtered out
+            const flatten = Metrics.flatten({
+                value: [ 'one', 'two', 'three', 'four', 'five']
+            });
+            console.log(flatten);
+            assert.deepStrictEqual(flatten, { value_item: 'one' });
+        });
+        it("set - numbers", () => {
             // 123 should be filtered out
             const flatten = Metrics.flatten({
                 value: new Set([ 1, 2, 3, 4, 5, 6, 7, 8 ])
             });
             assert.deepStrictEqual(flatten, { value_mean: 4.5 });
+        });
+        it("set - strings", () => {
+            // 123 should be filtered out
+            const flatten = Metrics.flatten({
+                value: new Set(['one', 'two', 'three', 'four', 'five'])
+            });
+            assert.deepStrictEqual(flatten, { value_item: 'one' });
         });
         it("error", () => {
             const e = Error("error message");
