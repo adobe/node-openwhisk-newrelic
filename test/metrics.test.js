@@ -31,24 +31,6 @@ describe("metrics", () => {
             const timestamp = Metrics.timestamp();
             assert.ok(typeof timestamp === "number");
         });
-        it("start-empty", () => {
-            const start = Metrics.start();
-            assert.ok(typeof start.start === "number");
-        });
-        it("start-object", () => {
-            const metrics = {};
-            const start = Metrics.start(metrics);
-            assert.ok(typeof start.start === "number");
-            assert.strictEqual(metrics, start);
-        });
-        it("end", () => {
-            const start = Metrics.start();
-            const end = Metrics.end(start);
-            assert.ok(typeof end.start === "number");
-            assert.ok(typeof end.end === "number");
-            assert.strictEqual(end.end - end.start, end.duration);
-            assert.strictEqual(start, end);
-        });
     });
     describe("openwhisk", () => {
         it("should return an empty object when no environment variables are set", () => {
@@ -92,85 +74,7 @@ describe("metrics", () => {
             delete process.env.__OW_ACTIVATION_ID;
         });
     })
-    describe("summary", () => {
-        it("numbers-array", () => {
-            const summary = Metrics.summary([1, 2, 3, 4, 5, 6, 7, 8]);
-            // limit stdev to 3 digits after the dot for comparison
-            summary.stdev = Math.round(summary.stdev * 1000) / 1000;
-            assert.deepStrictEqual(summary, {
-                max: 8,
-                mean: 4.5,
-                median: 4.5,
-                min: 1,
-                q1: 2.75,
-                q3: 6.25,
-                stdev: 2.449
-            });
-        });
-        it("numbers-set", () => {
-            const summary = Metrics.summary(new Set([1, 2, 3, 4, 5, 6, 7, 8]));
-            // limit stdev to 3 digits after the dot for comparison
-            summary.stdev = Math.round(summary.stdev * 1000) / 1000;
-            assert.deepStrictEqual(summary, {
-                max: 8,
-                mean: 4.5,
-                median: 4.5,
-                min: 1,
-                q1: 2.75,
-                q3: 6.25,
-                stdev: 2.449
-            });
-        });
-        it("objects-array", () => {
-            const summary = Metrics.summary([{
-                counter: 1,
-                constant: 5
-            }, {
-                counter: 2,
-                constant: 5
-            }, {
-                counter: 3,
-                constant: 5
-            }, {
-                counter: 4,
-                constant: 5
-            }, {
-                counter: 5,
-                constant: 5
-            }, {
-                counter: 6,
-                constant: 5
-            }, {
-                counter: 7,
-                constant: 5
-            }, {
-                counter: 8,
-                constant: 5
-            }]);
-            // limit stdev to 3 digits after the dot for comparison
-            summary.counter.stdev = Math.round(summary.counter.stdev * 1000) / 1000;
-            assert.deepStrictEqual(summary, {
-                counter: {
-                    max: 8,
-                    mean: 4.5,
-                    median: 4.5,
-                    min: 1,
-                    q1: 2.75,
-                    q3: 6.25,
-                    stdev: 2.449
-                },
-                constant: {
-                    max: 5,
-                    mean: 5,
-                    median: 5,
-                    min: 5,
-                    q1: 5,
-                    q3: 5,
-                    stdev: 0
-                }
-            });
-        });
-    });
+
     describe("flatten", () => {
         it("empty", () => {
             const flatten = Metrics.flatten({});
@@ -229,34 +133,15 @@ describe("metrics", () => {
             const flatten = Metrics.flatten({
                 value: [ 1, 2, 3, 4, 5, 6, 7, 8 ]
             });
-            // limit stdev to 3 digits after the dot for comparison
-            flatten.value_stdev = Math.round(flatten.value_stdev * 1000) / 1000;
-            assert.deepStrictEqual(flatten, { 
-                value_max: 8,
-                value_mean: 4.5,
-                value_median: 4.5,
-                value_min: 1,
-                value_q1: 2.75,
-                value_q3: 6.25,
-                value_stdev: 2.449
-            });
+            console.log(flatten);
+            assert.deepStrictEqual(flatten, { value_mean: 4.5 });
         });
         it("set", () => {
             // 123 should be filtered out
             const flatten = Metrics.flatten({
                 value: new Set([ 1, 2, 3, 4, 5, 6, 7, 8 ])
             });
-            // limit stdev to 3 digits after the dot for comparison
-            flatten.value_stdev = Math.round(flatten.value_stdev * 1000) / 1000;
-            assert.deepStrictEqual(flatten, { 
-                value_max: 8,
-                value_mean: 4.5,
-                value_median: 4.5,
-                value_min: 1,
-                value_q1: 2.75,
-                value_q3: 6.25,
-                value_stdev: 2.449
-            });
+            assert.deepStrictEqual(flatten, { value_mean: 4.5 });
         });
         it("error", () => {
             const e = Error("error message");

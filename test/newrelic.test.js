@@ -86,7 +86,6 @@ describe("AssetComputeMetrics", function() {
 		const metrics = new NewRelic();
 		assert.ok(metrics);
 		await metrics.send();
-		metrics.close();
 	});
 
 	it("sendMetrics", async function() {
