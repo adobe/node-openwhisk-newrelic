@@ -130,11 +130,11 @@ describe("AssetComputeMetrics", function() {
 		process.env.__OW_DEADLINE = Date.now() + 500;
 		const obj = new NewRelic( Object.assign( FAKE_PARAMS, {
 			actionTimeoutMetricsCb: () => {
-				console.log('I just ran');
 				return { test: 'add_value'};
 			}
 		}));
 
+		
 		obj.start(() => { 
 			assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 			done(); 
