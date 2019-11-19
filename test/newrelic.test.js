@@ -134,7 +134,6 @@ describe("AssetComputeMetrics", function() {
 			}
 		}));
 
-		
 		obj.start(() => { 
 			assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 			done(); 
