@@ -24,7 +24,8 @@ const assert = require("assert");
 const nock = require('nock');
 const zlib = require('zlib');
 const NewRelic = require('../lib/newrelic');
-const sinon = require('sinon');
+const { promisify } = require('util');
+const sleep = promisify(setTimeout);
 
 const NR_FAKE_BASE_URL = "http://newrelic.com";
 const NR_FAKE_EVENTS_PATH = "/events";
@@ -65,23 +66,19 @@ function expectNewRelicInsightsEvent(metrics, statusCode=200, defaultExpectedMet
 
 describe("AssetComputeMetrics", function() {
 
-	let clock;
-
     beforeEach(function() {
         process.env.__OW_ACTION_NAME = "/namespace/package/action";
         process.env.__OW_NAMESPACE = "namespace";
         process.env.__OW_ACTIVATION_ID = "activationId";
-		process.env.__OW_DEADLINE = Date.now() + 60000;
-		clock = sinon.useFakeTimers();
+        process.env.__OW_DEADLINE = Date.now() + 60000;
     })
 
     afterEach( function() {
-		delete process.env.__OW_DEADLINE;
-		clock.restore();
+        delete process.env.__OW_DEADLINE;
     })
 
     after( () => {
-		nock.cleanAll();
+        nock.cleanAll();
     })
 
 
@@ -120,7 +117,7 @@ describe("AssetComputeMetrics", function() {
 
 		process.env.__OW_DEADLINE = Date.now() + 500;
 		new NewRelic( FAKE_PARAMS );
-		clock.tick(1000);
+		await sleep(1000);
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 	});
 
@@ -136,7 +133,7 @@ describe("AssetComputeMetrics", function() {
 				return { test: 'add_value'}
 			}
 		}));
-		clock.tick(1000);
+		await sleep(1000);
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 	});
 
@@ -150,7 +147,7 @@ describe("AssetComputeMetrics", function() {
 		const metrics = new NewRelic( Object.assign( FAKE_PARAMS, {
 			disableActionTimeout: true
 		} ));
-		clock.tick(1000);
+		await sleep(1000);
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 		metrics.close();
