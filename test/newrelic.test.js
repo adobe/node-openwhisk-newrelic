@@ -129,11 +129,27 @@ describe("AssetComputeMetrics", function() {
 
 		process.env.__OW_DEADLINE = Date.now() + 500;
 		new NewRelic( Object.assign( FAKE_PARAMS, {
-			setActionTimeoutMetricsCB: () => {
+			actionTimeoutMetricsCb: () => {
 				return { test: 'add_value'}
 			}
 		}));
 		await sleep(1000);
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+	});
+
+	it("sendMetrics - Timeout Metrics disabled", async function() {
+
+		const nockSendEvent = expectNewRelicInsightsEvent({
+			eventType: EVENT_TYPE,
+			test: "value"
+		});
+		process.env.__OW_DEADLINE = Date.now() + 500;
+		const metrics = new NewRelic( Object.assign( FAKE_PARAMS, {
+			disableActionTimeout: true
+		} ));
+		await sleep(1000);
+		await metrics.send(EVENT_TYPE, { test: "value" });
+		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+		metrics.close();
 	});
 });
