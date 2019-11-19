@@ -22,5 +22,5 @@ const Metrics = require('./lib/metrics');
 
 module.exports = {
     Metrics,
-    NewRelic,
+    NewRelic
 }
