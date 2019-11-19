@@ -18,13 +18,22 @@ Reference: <https://docs.newrelic.com/docs/insights/insights-data-sources/custom
 
 ## Usage
 
-Initialize the New Relic Metrics agent
+Instantiate the New Relic Metrics agent
 ```
 const NewRelic = require('@nui/openwhisk-newrelic');
 const metrics = new NewRelic({
     newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
     newRelicApiKey: 'YOUR_API_KEY',
 });
+
+Call start() to start the agent when you are ready to start sending metrics
+```
+const NewRelic = require('@nui/openwhisk-newrelic');
+const metrics = new NewRelic({
+    newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
+    newRelicApiKey: 'YOUR_API_KEY',
+});
+metrics.start();
 ```
 
 Collect all your custom/background metrics in a separate object
