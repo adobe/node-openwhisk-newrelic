@@ -18,13 +18,9 @@
 'use strict';
 
 const { NewRelic } = require('./lib/newrelic');
-const { Sampler } = require('./lib/sampler');
 const Metrics = require('./lib/metrics');
-const instrument = require('./lib/instrument');
 
 module.exports = {
-    instrument,
     Metrics,
     NewRelic,
-    Sampler
 }
