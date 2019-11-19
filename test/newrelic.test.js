@@ -75,7 +75,7 @@ describe("AssetComputeMetrics", function() {
 		delete process.env.__OW_DEADLINE;
     })
 
-    after( () => {
+    after(() => {
 		nock.cleanAll();
     })
 
@@ -83,7 +83,7 @@ describe("AssetComputeMetrics", function() {
 	it("constructor should log but not throw error if no url or api key", async function() {
 		const metrics = new NewRelic();
 		assert.ok(metrics);
-		await metrics.send();
+		await metrics.send(); //not really needed here, since no background task running
 	});
 
 	it("sendMetrics", async function() {
@@ -94,7 +94,7 @@ describe("AssetComputeMetrics", function() {
 		const metrics = new NewRelic(FAKE_PARAMS);
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-		metrics.close();
+		metrics.close(); //not really needed here, since no background task running
 	});
 
 	it("sendMetrics - fail with 500 but not throw error", async function() {
@@ -105,7 +105,7 @@ describe("AssetComputeMetrics", function() {
 		const metrics = new NewRelic(FAKE_PARAMS);
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-		metrics.close();
+		metrics.close(); //not really needed here, since no background task running
 	});
 
 	it("sendMetrics - Timeout Metrics", function(done) {
@@ -114,8 +114,8 @@ describe("AssetComputeMetrics", function() {
 		});
 
 		process.env.__OW_DEADLINE = Date.now() + 500;
-		const obj = new NewRelic( FAKE_PARAMS );
-		obj.start(() => { 
+		const metrics = new NewRelic( FAKE_PARAMS );
+		metrics.start(() => { 
 			assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 			done(); 
 		});
@@ -128,13 +128,15 @@ describe("AssetComputeMetrics", function() {
 		});
 
 		process.env.__OW_DEADLINE = Date.now() + 500;
-		const obj = new NewRelic( Object.assign( FAKE_PARAMS, {
+		const metrics = new NewRelic( Object.assign( FAKE_PARAMS, {
 			actionTimeoutMetricsCb: () => {
 				return { test: 'add_value'};
 			}
 		}));
 
-		obj.start(() => { 
+		const that = metrics;
+		metrics.start(() => { 
+			that.close();
 			assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 			done(); 
 		});
@@ -152,6 +154,6 @@ describe("AssetComputeMetrics", function() {
 
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-		metrics.close();
+		//metrics.close(); //not needed, since no background task running
 	});
 });
