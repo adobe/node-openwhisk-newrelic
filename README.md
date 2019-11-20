@@ -25,6 +25,7 @@ const metrics = new NewRelic({
     newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
     newRelicApiKey: 'YOUR_API_KEY',
 });
+```
 
 Call start() to start the agent when you are ready to start sending metrics
 ```
