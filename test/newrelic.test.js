@@ -25,7 +25,6 @@ const nock = require('nock');
 const zlib = require('zlib');
 const NewRelic = require('../lib/newrelic');
 
-
 const NR_FAKE_BASE_URL = "http://newrelic.com";
 const NR_FAKE_EVENTS_PATH = "/events";
 const NR_FAKE_API_KEY = "new-relic-api-key";
@@ -64,19 +63,19 @@ function expectNewRelicInsightsEvent(metrics, statusCode=200, defaultExpectedMet
 }
 
 describe("AssetComputeMetrics", function() {
-	beforeEach(function() {
-		process.env.__OW_ACTION_NAME = "/namespace/package/action";
+    beforeEach(function() {
+        process.env.__OW_ACTION_NAME = "/namespace/package/action";
         process.env.__OW_NAMESPACE = "namespace";
         process.env.__OW_ACTIVATION_ID = "activationId";
-		process.env.__OW_DEADLINE = Date.now() + 60000;
+        process.env.__OW_DEADLINE = Date.now() + 60000;
     })
 
     afterEach( function() {
-		delete process.env.__OW_DEADLINE;
+        delete process.env.__OW_DEADLINE;
     })
 
-    after(() => {
-		nock.cleanAll();
+    after( () => {
+        nock.cleanAll();
     })
 
 
@@ -114,6 +113,7 @@ describe("AssetComputeMetrics", function() {
 		});
 
 		process.env.__OW_DEADLINE = Date.now() + 500;
+    
 		const metrics = new NewRelic(FAKE_PARAMS);
 
 		const that = metrics;
@@ -135,7 +135,7 @@ describe("AssetComputeMetrics", function() {
 			actionTimeoutMetricsCb: () => {
 				return { test: 'add_value'};
 			}
-		}), false);
+		}));
 
 		const that = metrics;
 		metrics.start(() => { 
