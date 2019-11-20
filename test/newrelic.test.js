@@ -114,8 +114,11 @@ describe("AssetComputeMetrics", function() {
 		});
 
 		process.env.__OW_DEADLINE = Date.now() + 500;
-		const metrics = new NewRelic( FAKE_PARAMS );
+		const metrics = new NewRelic(FAKE_PARAMS);
+
+		const that = metrics;
 		metrics.start(() => { 
+			that.close(); // close immediately after first background run
 			assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 			done(); 
 		});
@@ -132,11 +135,11 @@ describe("AssetComputeMetrics", function() {
 			actionTimeoutMetricsCb: () => {
 				return { test: 'add_value'};
 			}
-		}));
+		}), false);
 
 		const that = metrics;
 		metrics.start(() => { 
-			that.close();
+			that.close(); // close immediately after first background run
 			assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 			done(); 
 		});
@@ -154,6 +157,6 @@ describe("AssetComputeMetrics", function() {
 
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-		//metrics.close(); //not needed, since no background task running
+		metrics.close(); //not really needed, since no background task running (did not call start)
 	});
 });
