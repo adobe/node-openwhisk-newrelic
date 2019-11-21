@@ -18,7 +18,7 @@ Reference: <https://docs.newrelic.com/docs/insights/insights-data-sources/custom
 
 ## Usage
 
-Initialize the New Relic Metrics agent
+Initialize the New Relic Metrics agent. This will start a `setTimeout` that will send metrics if your action is close to timeout using `__OW_DEADLINE`
 ```
 const NewRelic = require('@nui/openwhisk-newrelic');
 const metrics = new NewRelic({
@@ -40,7 +40,7 @@ Send your metrics to New Relic
 await metrics.send('EVENT_TYPE', customMetrics);
 ```
 
-Call activationFinished() to stop the agent when you are finished sending metrics
+Call activationFinished() to stop the agent when you are finished sending metrics. This will clear the action timeout that began when the class instance was defined.
 ```
 metrics.activationFinished();
 ```
