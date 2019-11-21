@@ -24,6 +24,8 @@ const assert = require("assert");
 const nock = require('nock');
 const zlib = require('zlib');
 const NewRelic = require('../lib/newrelic');
+const { promisify } = require('util');
+const sleep = promisify(setTimeout);
 
 const NR_FAKE_BASE_URL = "http://newrelic.com";
 const NR_FAKE_EVENTS_PATH = "/events";
@@ -63,6 +65,7 @@ function expectNewRelicInsightsEvent(metrics, statusCode=200, defaultExpectedMet
 }
 
 describe("AssetComputeMetrics", function() {
+
     beforeEach(function() {
         process.env.__OW_ACTION_NAME = "/namespace/package/action";
         process.env.__OW_NAMESPACE = "namespace";
@@ -82,7 +85,7 @@ describe("AssetComputeMetrics", function() {
 	it("constructor should log but not throw error if no url or api key", async function() {
 		const metrics = new NewRelic();
 		assert.ok(metrics);
-		await metrics.send(); //not really needed here, since no background task running
+		await metrics.send();
 	});
 
 	it("sendMetrics", async function() {
@@ -93,7 +96,7 @@ describe("AssetComputeMetrics", function() {
 		const metrics = new NewRelic(FAKE_PARAMS);
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-		metrics.close(); //not really needed here, since no background task running
+		metrics.activationFinished();
 	});
 
 	it("sendMetrics - fail with 500 but not throw error", async function() {
@@ -104,59 +107,48 @@ describe("AssetComputeMetrics", function() {
 		const metrics = new NewRelic(FAKE_PARAMS);
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-		metrics.close(); //not really needed here, since no background task running
+		metrics.activationFinished();
 	});
 
-	it("sendMetrics - Timeout Metrics", function(done) {
+	it("sendMetrics - Timeout Metrics", async function() {
 		const nockSendEvent = expectNewRelicInsightsEvent({
 			eventType: "timeout"
 		});
 
-		process.env.__OW_DEADLINE = Date.now() + 500;
-    
-		const metrics = new NewRelic(FAKE_PARAMS);
-
-		const that = metrics;
-		metrics.start(() => { 
-			that.close(); // close immediately after first background run
-			assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-			done(); 
-		});
+		process.env.__OW_DEADLINE = Date.now() + 1;
+		new NewRelic( FAKE_PARAMS );
+		await sleep(500);
+		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 	});
 
-	it("sendMetrics - Timeout Metrics with callback", function(done) {
+	it("sendMetrics - Timeout Metrics with callback", async function() {
 		const nockSendEvent = expectNewRelicInsightsEvent({
 			eventType: "timeout",
 			test: 'add_value'
 		});
 
-		process.env.__OW_DEADLINE = Date.now() + 500;
-		const metrics = new NewRelic( Object.assign( FAKE_PARAMS, {
+		process.env.__OW_DEADLINE = Date.now() + 100;
+		new NewRelic( Object.assign( FAKE_PARAMS, {
 			actionTimeoutMetricsCb: () => {
-				return { test: 'add_value'};
+				return { test: 'add_value'}
 			}
 		}));
-
-		const that = metrics;
-		metrics.start(() => { 
-			that.close(); // close immediately after first background run
-			assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-			done(); 
-		});
+		await sleep(600);
+		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 	});
 
 	it("sendMetrics - Timeout Metrics disabled", async function() {
+
 		const nockSendEvent = expectNewRelicInsightsEvent({
 			eventType: EVENT_TYPE,
 			test: "value"
 		});
-		process.env.__OW_DEADLINE = Date.now() + 500;
+		process.env.__OW_DEADLINE = Date.now() + 100;
 		const metrics = new NewRelic( Object.assign( FAKE_PARAMS, {
 			disableActionTimeout: true
 		} ));
-
+		await sleep(600);
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-		metrics.close(); //not really needed, since no background task running (did not call start)
 	});
 });

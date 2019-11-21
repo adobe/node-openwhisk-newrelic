@@ -133,7 +133,6 @@ describe("metrics", () => {
             const flatten = Metrics.flatten({
                 value: [ 1, 2, 3, 4, 5, 6, 7, 8 ]
             });
-            console.log(flatten);
             assert.deepStrictEqual(flatten, { value_mean: 4.5 });
         });
         it("array - strings", () => {
@@ -141,7 +140,6 @@ describe("metrics", () => {
             const flatten = Metrics.flatten({
                 value: [ 'one', 'two', 'three', 'four', 'five']
             });
-            console.log(flatten);
             assert.deepStrictEqual(flatten, { value_item: 'one' });
         });
         it("set - numbers", () => {
