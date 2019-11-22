@@ -130,7 +130,7 @@ describe("AssetComputeMetrics", function() {
 		process.env.__OW_DEADLINE = Date.now() + 100;
 		new NewRelic( Object.assign( FAKE_PARAMS, {
 			actionTimeoutMetricsCb: () => {
-				return { test: 'add_value'}
+				return { test: 'add_value'};
 			}
 		}));
 		await sleep(600);
