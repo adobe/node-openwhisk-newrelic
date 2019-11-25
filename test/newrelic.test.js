@@ -99,6 +99,38 @@ describe("AssetComputeMetrics", function() {
 		metrics.activationFinished();
 	});
 
+	it("sendMetrics - default metrics frozen object", async function() {
+		const nockSendEvent = expectNewRelicInsightsEvent({
+			eventType: EVENT_TYPE,
+			test: "value",
+			duration:2000
+		});
+		const defaultMetrics = Object.freeze({
+			duration:2000
+		})
+		const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
+		await metrics.send(EVENT_TYPE, { test: "value" });
+		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+		metrics.activationFinished();
+	});
+
+	it("sendMetrics - default metrics", async function() {
+		const nockSendEvent = expectNewRelicInsightsEvent({
+			eventType: EVENT_TYPE,
+			test: "value",
+			duration:2000
+		});
+		const defaultMetrics = {
+			duration: 2000
+		}
+		const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
+		await metrics.send(EVENT_TYPE, { test: "value" });
+		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+		metrics.activationFinished();
+		assert.equal(Object.keys(defaultMetrics), "duration");
+		assert.equal(defaultMetrics.duration, 2000);
+	});
+
 	it("sendMetrics - fail with 500 but not throw error", async function() {
 		const nockSendEvent = expectNewRelicInsightsEvent({
 			eventType: EVENT_TYPE,
