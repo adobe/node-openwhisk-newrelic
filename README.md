@@ -61,7 +61,7 @@ const metrics = new NewRelic({
 2. Set the environment variable: `DISABLE_ACTION_TIMEOUT` to `true`:
 `export DISABLE_ACTION_TIMEOUT = true`
 
-If either of these are set to true, there will be no action timeout.
+If either of these are set to true, there will be no action timeout and calling `activationFinished` is no longer necessary.
 
 
 In case you want to pass custom metrics to the action timeout, you can define a callback function in New Relic options. The result of the callback will be added to the default metrics and sent at action timeout. If you do not define an `eventType`, it will default to `timeout`.:
