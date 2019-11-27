@@ -60,7 +60,7 @@ const metrics = new NewRelic({
 });
 ```
 2. Set the environment variable: `DISABLE_ACTION_TIMEOUT` to `true`:
-`process.env.DISABLE_ACTION_TIMEOUT = true`
+`export DISABLE_ACTION_TIMEOUT = true`
 
 If either of these are set to true, there will be no action timeout.
 
