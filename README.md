@@ -39,8 +39,7 @@ Send your metrics to New Relic
 ```
 await metrics.send('EVENT_TYPE', customMetrics);
 ```
-
-Call activationFinished() to stop the agent when you are finished sending metrics. This will clear the action timeout that began when the class instance was defined.
+You MUST call `activationFinished()` to stop the agent when you are done sending metrics, or when your action is finishing. This will clear the action timeout that began when the class instance was defined.
 ```
 metrics.activationFinished();
 ```
