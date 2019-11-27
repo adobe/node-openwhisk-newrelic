@@ -169,7 +169,39 @@ describe("AssetComputeMetrics", function() {
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 	});
 
-	it("sendMetrics - Timeout Metrics disabled", async function() {
+	it("sendMetrics - Timeout Metrics with callback, custom eventType", async function() {
+		const nockSendEvent = expectNewRelicInsightsEvent({
+			eventType: "custom",
+			test: 'add_value'
+		});
+
+		process.env.__OW_DEADLINE = Date.now() + 100;
+		new NewRelic( Object.assign( FAKE_PARAMS, {
+			actionTimeoutMetricsCb: () => {
+				return {
+					eventType: "custom",
+					test: 'add_value'
+				};
+			}
+		}));
+		await sleep(600);
+		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+	});
+
+	it("sendMetrics - Timeout Metrics with invalid callback", async function() {
+		const nockSendEvent = expectNewRelicInsightsEvent({
+			eventType: "timeout"
+		});
+
+		process.env.__OW_DEADLINE = Date.now() + 100;
+		new NewRelic( Object.assign( FAKE_PARAMS, {
+			actionTimeoutMetricsCb: { test: 'add_value'}
+		}));
+		await sleep(600);
+		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+	});
+
+	it("sendMetrics - Timeout Metrics disabled with options", async function() {
 
 		const nockSendEvent = expectNewRelicInsightsEvent({
 			eventType: EVENT_TYPE,
@@ -180,6 +212,19 @@ describe("AssetComputeMetrics", function() {
 			disableActionTimeout: true
 		} ));
 		await sleep(600);
+		await metrics.send(EVENT_TYPE, { test: "value" });
+		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+	});
+
+	it("sendMetrics - Timeout Metrics disabled with environment variable", async function() {
+		process.env.DISABLE_ACTION_TIMEOUT = true;
+		const nockSendEvent = expectNewRelicInsightsEvent({
+			eventType: EVENT_TYPE,
+			test: "value"
+		});
+		process.env.__OW_DEADLINE = Date.now() + 100;
+		const metrics = new NewRelic(FAKE_PARAMS);
+		await sleep(600); // wait to past action timeout to make sure no timeout metrics are sent
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
 	});
