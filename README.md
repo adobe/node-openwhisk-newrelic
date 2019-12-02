@@ -58,7 +58,7 @@ const metrics = new NewRelic({
     disableActionTimeout: true
 });
 ```
-2. Set the environment variable: `_DISABLE_ACTION_TIMEOUT_METRIC` to `true`:
+2. Set the environment variable: `DISABLE_ACTION_TIMEOUT_METRIC` to `true`:
 `export DISABLE_ACTION_TIMEOUT_METRIC = true`
 
 If either of these are set to true, there will be no action timeout and calling `activationFinished` is no longer necessary.
