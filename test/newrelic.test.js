@@ -217,7 +217,7 @@ describe("AssetComputeMetrics", function() {
 	});
 
 	it("sendMetrics - Timeout Metrics disabled with environment variable", async function() {
-		process.env.DISABLE_ACTION_TIMEOUT = true;
+		process.env.DISABLE_ACTION_TIMEOUT_METRIC = true;
 		const nockSendEvent = expectNewRelicInsightsEvent({
 			eventType: EVENT_TYPE,
 			test: "value"
