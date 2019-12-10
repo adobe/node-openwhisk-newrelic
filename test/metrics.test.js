@@ -80,6 +80,17 @@ describe("metrics", () => {
             const flatten = Metrics.flatten({});
             assert.deepStrictEqual(flatten, {});
         });
+
+        it("unsupported property type: function", () => {
+            try {
+                Metrics.flatten({ value: function() {
+                    console.log('Scary function!')
+                }});
+                assert.fail('Should have failed');
+            } catch(e) {
+                assert(e.message.includes("Unsupported property"))
+            }
+        });
         it("number", () => {
             const flatten = Metrics.flatten({ value: 1 });
             assert.deepStrictEqual(flatten, { value: 1 });
