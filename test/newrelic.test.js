@@ -99,10 +99,53 @@ describe("AssetComputeMetrics", function() {
 		await metrics.send();
 	});
 
+	it("constructor should log but not throw error if url is null", async function() {
+		const params = {
+			newRelicEventsURL: null,
+			newRelicApiKey: NR_FAKE_API_KEY,
+		};
+
+		const metrics = new NewRelic(params);
+		assert.ok(metrics);
+		await metrics.send();
+	});
+
 	it("constructor should log but not throw error if api key is blank string", async function() {
 		const params = {
 			newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
 			newRelicApiKey: '\n'
+		};
+
+		const metrics = new NewRelic(params);
+		assert.ok(metrics);
+		await metrics.send();
+	});
+
+	it("constructor should log but not throw error if api key is not a string", async function() {
+		const params = {
+			newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
+			newRelicApiKey: 2
+		};
+
+		const metrics = new NewRelic(params);
+		assert.ok(metrics);
+		await metrics.send();
+	});
+
+	it("constructor should log but not throw error if api key is undefined", async function() {
+		const params = {
+			newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
+		};
+
+		const metrics = new NewRelic(params);
+		assert.ok(metrics);
+		await metrics.send();
+	});
+
+	it("constructor should log but not throw error if url is not a valid http/https url", async function() {
+		const params = {
+			newRelicEventsURL: 'this-is-not-a-valid-url',
+			newRelicApiKey: NR_FAKE_API_KEY
 		};
 
 		const metrics = new NewRelic(params);

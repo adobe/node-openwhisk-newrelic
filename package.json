@@ -14,7 +14,8 @@
     "url": "https://git.corp.adobe.com/nui/node-openwhisk-newrelic.git"
   },
   "dependencies": {
-    "node-fetch": "^2.6.0"
+    "node-fetch": "^2.6.0",
+    "valid-url": "^1.0.9"
   },
   "devDependencies": {
     "@nui/eslint-config": "^1.0.2",
