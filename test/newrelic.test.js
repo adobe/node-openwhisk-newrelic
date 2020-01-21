@@ -88,6 +88,28 @@ describe("AssetComputeMetrics", function() {
 		await metrics.send();
 	});
 
+	it("constructor should log but not throw error if url is blank string", async function() {
+		const params = {
+			newRelicEventsURL: '\n',
+			newRelicApiKey: NR_FAKE_API_KEY,
+		};
+
+		const metrics = new NewRelic(params);
+		assert.ok(metrics);
+		await metrics.send();
+	});
+
+	it("constructor should log but not throw error if api key is blank string", async function() {
+		const params = {
+			newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
+			newRelicApiKey: '\n'
+		};
+
+		const metrics = new NewRelic(params);
+		assert.ok(metrics);
+		await metrics.send();
+	});
+
 	it("sendMetrics", async function() {
 		const nockSendEvent = expectNewRelicInsightsEvent({
 			eventType: EVENT_TYPE,
