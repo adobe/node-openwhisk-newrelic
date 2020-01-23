@@ -71,15 +71,15 @@ describe("AssetComputeMetrics", function() {
         process.env.__OW_NAMESPACE = "namespace";
         process.env.__OW_ACTIVATION_ID = "activationId";
         process.env.__OW_DEADLINE = Date.now() + 60000;
-    })
+    });
 
     afterEach( function() {
         delete process.env.__OW_DEADLINE;
-    })
+    });
 
     after( () => {
         nock.cleanAll();
-    })
+    });
 
 
 	it("constructor should log but not throw error if no url or api key", async function() {
@@ -142,17 +142,6 @@ describe("AssetComputeMetrics", function() {
 		await metrics.send();
 	});
 
-	it("constructor should log but not throw error if url is not a valid http/https url", async function() {
-		const params = {
-			newRelicEventsURL: 'this-is-not-a-valid-url',
-			newRelicApiKey: NR_FAKE_API_KEY
-		};
-
-		const metrics = new NewRelic(params);
-		assert.ok(metrics);
-		await metrics.send();
-	});
-
 	it("sendMetrics", async function() {
 		const nockSendEvent = expectNewRelicInsightsEvent({
 			eventType: EVENT_TYPE,
@@ -172,7 +161,7 @@ describe("AssetComputeMetrics", function() {
 		});
 		const defaultMetrics = Object.freeze({
 			duration:2000
-		})
+		});
 		const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
@@ -187,7 +176,7 @@ describe("AssetComputeMetrics", function() {
 		});
 		const defaultMetrics = {
 			duration: 2000
-		}
+		};
 		const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
