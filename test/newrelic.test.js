@@ -71,19 +71,73 @@ describe("AssetComputeMetrics", function() {
         process.env.__OW_NAMESPACE = "namespace";
         process.env.__OW_ACTIVATION_ID = "activationId";
         process.env.__OW_DEADLINE = Date.now() + 60000;
-    })
+    });
 
     afterEach( function() {
         delete process.env.__OW_DEADLINE;
-    })
+    });
 
     after( () => {
         nock.cleanAll();
-    })
+    });
 
 
 	it("constructor should log but not throw error if no url or api key", async function() {
 		const metrics = new NewRelic();
+		assert.ok(metrics);
+		await metrics.send();
+	});
+
+	it("constructor should log but not throw error if url is blank string", async function() {
+		const params = {
+			newRelicEventsURL: '\n',
+			newRelicApiKey: NR_FAKE_API_KEY,
+		};
+
+		const metrics = new NewRelic(params);
+		assert.ok(metrics);
+		await metrics.send();
+	});
+
+	it("constructor should log but not throw error if url is null", async function() {
+		const params = {
+			newRelicEventsURL: null,
+			newRelicApiKey: NR_FAKE_API_KEY,
+		};
+
+		const metrics = new NewRelic(params);
+		assert.ok(metrics);
+		await metrics.send();
+	});
+
+	it("constructor should log but not throw error if api key is blank string", async function() {
+		const params = {
+			newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
+			newRelicApiKey: '\n'
+		};
+
+		const metrics = new NewRelic(params);
+		assert.ok(metrics);
+		await metrics.send();
+	});
+
+	it("constructor should log but not throw error if api key is not a string", async function() {
+		const params = {
+			newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
+			newRelicApiKey: 2
+		};
+
+		const metrics = new NewRelic(params);
+		assert.ok(metrics);
+		await metrics.send();
+	});
+
+	it("constructor should log but not throw error if api key is undefined", async function() {
+		const params = {
+			newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
+		};
+
+		const metrics = new NewRelic(params);
 		assert.ok(metrics);
 		await metrics.send();
 	});
@@ -107,7 +161,7 @@ describe("AssetComputeMetrics", function() {
 		});
 		const defaultMetrics = Object.freeze({
 			duration:2000
-		})
+		});
 		const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
@@ -122,7 +176,7 @@ describe("AssetComputeMetrics", function() {
 		});
 		const defaultMetrics = {
 			duration: 2000
-		}
+		};
 		const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
 		await metrics.send(EVENT_TYPE, { test: "value" });
 		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
