@@ -42,8 +42,8 @@ const EXPECTED_METRICS = Object.freeze({
     actionName: "action",
     namespace: "namespace",
     activationId: "activationId",
-	package: "package",
-	timestamp:/\d+/
+    package: "package",
+    timestamp:/\d+/
 });
 
 function gunzip(body) {
@@ -74,261 +74,261 @@ describe("NewRelic", function() {
     });
 
     afterEach( function() {
-		delete process.env.DISABLE_ACTION_TIMEOUT_METRIC;
+        delete process.env.DISABLE_ACTION_TIMEOUT_METRIC;
         delete process.env.__OW_ACTION_NAME;
         delete process.env.__OW_NAMESPACE;
-		delete process.env.__OW_ACTIVATION_ID;
+        delete process.env.__OW_ACTIVATION_ID;
         delete process.env.__OW_DEADLINE;
         nock.cleanAll();
     });
 
-	it("constructor should log but not throw error if no url or api key", async function() {
-		const metrics = new NewRelic();
-		assert.ok(metrics);
-		await metrics.send();
-	});
+    it("constructor should log but not throw error if no url or api key", async function() {
+        const metrics = new NewRelic();
+        assert.ok(metrics);
+        await metrics.send();
+    });
 
-	it("constructor should log but not throw error if url is blank string", async function() {
-		const params = {
-			newRelicEventsURL: '\n',
-			newRelicApiKey: NR_FAKE_API_KEY,
-		};
+    it("constructor should log but not throw error if url is blank string", async function() {
+        const params = {
+            newRelicEventsURL: '\n',
+            newRelicApiKey: NR_FAKE_API_KEY,
+        };
 
-		const metrics = new NewRelic(params);
-		assert.ok(metrics);
-		await metrics.send();
-	});
+        const metrics = new NewRelic(params);
+        assert.ok(metrics);
+        await metrics.send();
+    });
 
-	it("constructor should log but not throw error if url is null", async function() {
-		const params = {
-			newRelicEventsURL: null,
-			newRelicApiKey: NR_FAKE_API_KEY,
-		};
+    it("constructor should log but not throw error if url is null", async function() {
+        const params = {
+            newRelicEventsURL: null,
+            newRelicApiKey: NR_FAKE_API_KEY,
+        };
 
-		const metrics = new NewRelic(params);
-		assert.ok(metrics);
-		await metrics.send();
-	});
+        const metrics = new NewRelic(params);
+        assert.ok(metrics);
+        await metrics.send();
+    });
 
-	it("constructor should log but not throw error if api key is blank string", async function() {
-		const params = {
-			newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
-			newRelicApiKey: '\n'
-		};
+    it("constructor should log but not throw error if api key is blank string", async function() {
+        const params = {
+            newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
+            newRelicApiKey: '\n'
+        };
 
-		const metrics = new NewRelic(params);
-		assert.ok(metrics);
-		await metrics.send();
-	});
+        const metrics = new NewRelic(params);
+        assert.ok(metrics);
+        await metrics.send();
+    });
 
-	it("constructor should log but not throw error if api key is not a string", async function() {
-		const params = {
-			newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
-			newRelicApiKey: 2
-		};
+    it("constructor should log but not throw error if api key is not a string", async function() {
+        const params = {
+            newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
+            newRelicApiKey: 2
+        };
 
-		const metrics = new NewRelic(params);
-		assert.ok(metrics);
-		await metrics.send();
-	});
+        const metrics = new NewRelic(params);
+        assert.ok(metrics);
+        await metrics.send();
+    });
 
-	it("constructor should log but not throw error if api key is undefined", async function() {
-		const params = {
-			newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
-		};
+    it("constructor should log but not throw error if api key is undefined", async function() {
+        const params = {
+            newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
+        };
 
-		const metrics = new NewRelic(params);
-		assert.ok(metrics);
-		await metrics.send();
-	});
+        const metrics = new NewRelic(params);
+        assert.ok(metrics);
+        await metrics.send();
+    });
 
-	it("sendMetrics", async function() {
-		const nockSendEvent = expectNewRelicInsightsEvent({
-			eventType: EVENT_TYPE,
-			test: "value"
-		});
-		const metrics = new NewRelic(FAKE_PARAMS);
-		await metrics.send(EVENT_TYPE, { test: "value" });
-		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-		metrics.activationFinished();
-	});
+    it("sendMetrics", async function() {
+        const nockSendEvent = expectNewRelicInsightsEvent({
+            eventType: EVENT_TYPE,
+            test: "value"
+        });
+        const metrics = new NewRelic(FAKE_PARAMS);
+        await metrics.send(EVENT_TYPE, { test: "value" });
+        assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+        metrics.activationFinished();
+    });
 
-	it("sendMetrics - default metrics frozen object", async function() {
-		const nockSendEvent = expectNewRelicInsightsEvent({
-			eventType: EVENT_TYPE,
-			test: "value",
-			duration:2000
-		});
-		const defaultMetrics = Object.freeze({
-			duration:2000
-		});
-		const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
-		await metrics.send(EVENT_TYPE, { test: "value" });
-		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-		metrics.activationFinished();
-	});
+    it("sendMetrics - default metrics frozen object", async function() {
+        const nockSendEvent = expectNewRelicInsightsEvent({
+            eventType: EVENT_TYPE,
+            test: "value",
+            duration:2000
+        });
+        const defaultMetrics = Object.freeze({
+            duration:2000
+        });
+        const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
+        await metrics.send(EVENT_TYPE, { test: "value" });
+        assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+        metrics.activationFinished();
+    });
 
-	it("sendMetrics - default metrics", async function() {
-		const nockSendEvent = expectNewRelicInsightsEvent({
-			eventType: EVENT_TYPE,
-			test: "value",
-			duration:2000
-		});
-		const defaultMetrics = {
-			duration: 2000
-		};
-		const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
-		await metrics.send(EVENT_TYPE, { test: "value" });
-		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-		metrics.activationFinished();
-		assert.equal(Object.keys(defaultMetrics), "duration");
-		assert.equal(defaultMetrics.duration, 2000);
-	});
+    it("sendMetrics - default metrics", async function() {
+        const nockSendEvent = expectNewRelicInsightsEvent({
+            eventType: EVENT_TYPE,
+            test: "value",
+            duration:2000
+        });
+        const defaultMetrics = {
+            duration: 2000
+        };
+        const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
+        await metrics.send(EVENT_TYPE, { test: "value" });
+        assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+        metrics.activationFinished();
+        assert.equal(Object.keys(defaultMetrics), "duration");
+        assert.equal(defaultMetrics.duration, 2000);
+    });
 
-	it("sendMetrics - fail with 500 but not throw error", async function() {
-		const nockSendEvent = expectNewRelicInsightsEvent({
-			eventType: EVENT_TYPE,
-			test: "value"
-		}, 500);
-		const metrics = new NewRelic(FAKE_PARAMS);
-		await metrics.send(EVENT_TYPE, { test: "value" });
-		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-		metrics.activationFinished();
-	});
+    it("sendMetrics - fail with 500 but not throw error", async function() {
+        const nockSendEvent = expectNewRelicInsightsEvent({
+            eventType: EVENT_TYPE,
+            test: "value"
+        }, 500);
+        const metrics = new NewRelic(FAKE_PARAMS);
+        await metrics.send(EVENT_TYPE, { test: "value" });
+        assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+        metrics.activationFinished();
+    });
 
-	it("sendMetrics - Timeout Metrics", async function() {
-		const nockSendEvent = expectNewRelicInsightsEvent({
-			eventType: "timeout"
-		});
+    it("sendMetrics - Timeout Metrics", async function() {
+        const nockSendEvent = expectNewRelicInsightsEvent({
+            eventType: "timeout"
+        });
 
-		process.env.__OW_DEADLINE = Date.now() + 1;
-		new NewRelic( FAKE_PARAMS );
-		await sleep(500);
-		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-	});
+        process.env.__OW_DEADLINE = Date.now() + 1;
+        new NewRelic( FAKE_PARAMS );
+        await sleep(500);
+        assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+    });
 
-	it("sendMetrics - Timeout Metrics with callback", async function() {
-		const nockSendEvent = expectNewRelicInsightsEvent({
-			eventType: "timeout",
-			test: 'add_value'
-		});
+    it("sendMetrics - Timeout Metrics with callback", async function() {
+        const nockSendEvent = expectNewRelicInsightsEvent({
+            eventType: "timeout",
+            test: 'add_value'
+        });
 
-		process.env.__OW_DEADLINE = Date.now() + 100;
-		new NewRelic( Object.assign( {}, FAKE_PARAMS, {
-			actionTimeoutMetricsCb: () => {
-				return { test: 'add_value'};
-			}
-		}));
-		await sleep(600);
-		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-	});
+        process.env.__OW_DEADLINE = Date.now() + 100;
+        new NewRelic( Object.assign( {}, FAKE_PARAMS, {
+            actionTimeoutMetricsCb: () => {
+                return { test: 'add_value'};
+            }
+        }));
+        await sleep(600);
+        assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+    });
 
-	it("sendMetrics - Timeout Metrics with callback, custom eventType", async function() {
-		const nockSendEvent = expectNewRelicInsightsEvent({
-			eventType: "custom",
-			test: 'add_value'
-		});
+    it("sendMetrics - Timeout Metrics with callback, custom eventType", async function() {
+        const nockSendEvent = expectNewRelicInsightsEvent({
+            eventType: "custom",
+            test: 'add_value'
+        });
 
-		process.env.__OW_DEADLINE = Date.now() + 100;
-		new NewRelic( Object.assign( {}, FAKE_PARAMS, {
-			actionTimeoutMetricsCb: () => {
-				return {
-					eventType: "custom",
-					test: 'add_value'
-				};
-			}
-		}));
-		await sleep(600);
-		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-	});
+        process.env.__OW_DEADLINE = Date.now() + 100;
+        new NewRelic( Object.assign( {}, FAKE_PARAMS, {
+            actionTimeoutMetricsCb: () => {
+                return {
+                    eventType: "custom",
+                    test: 'add_value'
+                };
+            }
+        }));
+        await sleep(600);
+        assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+    });
 
-	it("sendMetrics - Timeout Metrics with invalid callback", async function() {
-		const nockSendEvent = expectNewRelicInsightsEvent({
-			eventType: "timeout"
-		});
+    it("sendMetrics - Timeout Metrics with invalid callback", async function() {
+        const nockSendEvent = expectNewRelicInsightsEvent({
+            eventType: "timeout"
+        });
 
-		process.env.__OW_DEADLINE = Date.now() + 100;
-		new NewRelic( Object.assign( {}, FAKE_PARAMS, {
-			actionTimeoutMetricsCb: { test: 'add_value'}
-		}));
-		await sleep(600);
-		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-	});
+        process.env.__OW_DEADLINE = Date.now() + 100;
+        new NewRelic( Object.assign( {}, FAKE_PARAMS, {
+            actionTimeoutMetricsCb: { test: 'add_value'}
+        }));
+        await sleep(600);
+        assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+    });
 
-	it("sendMetrics - Timeout Metrics disabled with options", async function() {
-		const mustNotHappen = expectNewRelicInsightsEvent({
-			eventType: "timeout"
-		});
-		process.env.__OW_DEADLINE = Date.now() + 100;
-		new NewRelic( Object.assign( {}, FAKE_PARAMS, {
-			disableActionTimeout: true
-		} ));
-		await sleep(600);
-		assert.ok(!mustNotHappen.isDone(), "timeout metrics was sent even though it should be disabled");
-	});
+    it("sendMetrics - Timeout Metrics disabled with options", async function() {
+        const mustNotHappen = expectNewRelicInsightsEvent({
+            eventType: "timeout"
+        });
+        process.env.__OW_DEADLINE = Date.now() + 100;
+        new NewRelic( Object.assign( {}, FAKE_PARAMS, {
+            disableActionTimeout: true
+        } ));
+        await sleep(600);
+        assert.ok(!mustNotHappen.isDone(), "timeout metrics was sent even though it should be disabled");
+    });
 
-	it("sendMetrics - Timeout Metrics disabled with environment variable", async function() {
-		const mustNotHappen = expectNewRelicInsightsEvent({
-			eventType: "timeout"
-		});
+    it("sendMetrics - Timeout Metrics disabled with environment variable", async function() {
+        const mustNotHappen = expectNewRelicInsightsEvent({
+            eventType: "timeout"
+        });
 
-		process.env.DISABLE_ACTION_TIMEOUT_METRIC = true;
+        process.env.DISABLE_ACTION_TIMEOUT_METRIC = true;
 
-		process.env.__OW_DEADLINE = Date.now() + 100;
-		 new NewRelic(FAKE_PARAMS);
-		await sleep(600); // wait to past action timeout to make sure no timeout metrics are sent
-		assert.ok(!mustNotHappen.isDone(), "timeout metrics was sent even though it should be disabled");
-	});
+        process.env.__OW_DEADLINE = Date.now() + 100;
+        new NewRelic(FAKE_PARAMS);
+        await sleep(600); // wait to past action timeout to make sure no timeout metrics are sent
+        assert.ok(!mustNotHappen.isDone(), "timeout metrics was sent even though it should be disabled");
+    });
 
-	it("add()", async function() {
-		expectNewRelicInsightsEvent({
-			eventType: EVENT_TYPE,
-			test: "value",
-			added: "metric",
-			anotherAdded: "metric"
-		});
-		expectNewRelicInsightsEvent({
-			eventType: EVENT_TYPE,
-			test: "value",
-			added: "metric2",
-			anotherAdded: "metric"
-		});
-		expectNewRelicInsightsEvent({
-			eventType: EVENT_TYPE,
-			added: "metric3",
-			anotherAdded: "metric"
-		});
+    it("add()", async function() {
+        expectNewRelicInsightsEvent({
+            eventType: EVENT_TYPE,
+            test: "value",
+            added: "metric",
+            anotherAdded: "metric"
+        });
+        expectNewRelicInsightsEvent({
+            eventType: EVENT_TYPE,
+            test: "value",
+            added: "metric2",
+            anotherAdded: "metric"
+        });
+        expectNewRelicInsightsEvent({
+            eventType: EVENT_TYPE,
+            added: "metric3",
+            anotherAdded: "metric"
+        });
 
-		const metrics = new NewRelic(FAKE_PARAMS);
-		// add metrics
-		metrics.add({
-			added: "metric",
-			anotherAdded: "metric"
-		});
-		await metrics.send(EVENT_TYPE, { test: "value" });
+        const metrics = new NewRelic(FAKE_PARAMS);
+        // add metrics
+        metrics.add({
+            added: "metric",
+            anotherAdded: "metric"
+        });
+        await metrics.send(EVENT_TYPE, { test: "value" });
 
-		// overwrite previously added metrics with newly added metrics
-		metrics.add({added: "metric2"});
-		await metrics.send(EVENT_TYPE, { test: "value" });
+        // overwrite previously added metrics with newly added metrics
+        metrics.add({added: "metric2"});
+        await metrics.send(EVENT_TYPE, { test: "value" });
 
-		// overwrite previously added metrics via send() metrics
-		await metrics.send(EVENT_TYPE, {added: "metric3"});
+        // overwrite previously added metrics via send() metrics
+        await metrics.send(EVENT_TYPE, {added: "metric3"});
 
-		assert.ok(nock.isDone(), "metrics not properly sent");
-		metrics.activationFinished();
-	});
+        assert.ok(nock.isDone(), "metrics not properly sent");
+        metrics.activationFinished();
+    });
 
-	it("sendMetrics - Timeout Metrics with add()", async function() {
-		expectNewRelicInsightsEvent({
-			eventType: "timeout",
-			added: "metric"
-		});
+    it("sendMetrics - Timeout Metrics with add()", async function() {
+        expectNewRelicInsightsEvent({
+            eventType: "timeout",
+            added: "metric"
+        });
 
-		process.env.__OW_DEADLINE = Date.now() + 1;
-		const metrics = new NewRelic( FAKE_PARAMS );
-		metrics.add({added: "metric"});
-		await sleep(600);
-		assert.ok(nock.isDone(), "metrics not properly sent");
-	});
+        process.env.__OW_DEADLINE = Date.now() + 1;
+        const metrics = new NewRelic( FAKE_PARAMS );
+        metrics.add({added: "metric"});
+        await sleep(600);
+        assert.ok(nock.isDone(), "metrics not properly sent");
+    });
 
 });
