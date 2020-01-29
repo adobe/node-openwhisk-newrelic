@@ -32,19 +32,19 @@ const NR_FAKE_EVENTS_PATH = "/events";
 const NR_FAKE_API_KEY = "new-relic-api-key";
 const EVENT_TYPE = "myevent";
 
-const FAKE_PARAMS = {
+const FAKE_PARAMS = Object.freeze({
     newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
     newRelicApiKey: NR_FAKE_API_KEY,
-};
+});
 
-const EXPECTED_METRICS = {
+
+const EXPECTED_METRICS = Object.freeze({
     actionName: "action",
     namespace: "namespace",
     activationId: "activationId",
 	package: "package",
 	timestamp:/\d+/
-
-};
+});
 
 function gunzip(body) {
     body = Buffer.from(body, 'hex');
@@ -64,7 +64,7 @@ function expectNewRelicInsightsEvent(metrics, statusCode=200, defaultExpectedMet
         .reply(statusCode, {});
 }
 
-describe("AssetComputeMetrics", function() {
+describe("NewRelic", function() {
 
     beforeEach(function() {
         process.env.__OW_ACTION_NAME = "/namespace/package/action";
@@ -74,13 +74,13 @@ describe("AssetComputeMetrics", function() {
     });
 
     afterEach( function() {
+		delete process.env.DISABLE_ACTION_TIMEOUT_METRIC;
+        delete process.env.__OW_ACTION_NAME;
+        delete process.env.__OW_NAMESPACE;
+		delete process.env.__OW_ACTIVATION_ID;
         delete process.env.__OW_DEADLINE;
-    });
-
-    after( () => {
         nock.cleanAll();
     });
-
 
 	it("constructor should log but not throw error if no url or api key", async function() {
 		const metrics = new NewRelic();
@@ -214,7 +214,7 @@ describe("AssetComputeMetrics", function() {
 		});
 
 		process.env.__OW_DEADLINE = Date.now() + 100;
-		new NewRelic( Object.assign( FAKE_PARAMS, {
+		new NewRelic( Object.assign( {}, FAKE_PARAMS, {
 			actionTimeoutMetricsCb: () => {
 				return { test: 'add_value'};
 			}
@@ -230,7 +230,7 @@ describe("AssetComputeMetrics", function() {
 		});
 
 		process.env.__OW_DEADLINE = Date.now() + 100;
-		new NewRelic( Object.assign( FAKE_PARAMS, {
+		new NewRelic( Object.assign( {}, FAKE_PARAMS, {
 			actionTimeoutMetricsCb: () => {
 				return {
 					eventType: "custom",
@@ -248,7 +248,7 @@ describe("AssetComputeMetrics", function() {
 		});
 
 		process.env.__OW_DEADLINE = Date.now() + 100;
-		new NewRelic( Object.assign( FAKE_PARAMS, {
+		new NewRelic( Object.assign( {}, FAKE_PARAMS, {
 			actionTimeoutMetricsCb: { test: 'add_value'}
 		}));
 		await sleep(600);
@@ -256,30 +256,79 @@ describe("AssetComputeMetrics", function() {
 	});
 
 	it("sendMetrics - Timeout Metrics disabled with options", async function() {
-
-		const nockSendEvent = expectNewRelicInsightsEvent({
-			eventType: EVENT_TYPE,
-			test: "value"
+		const mustNotHappen = expectNewRelicInsightsEvent({
+			eventType: "timeout"
 		});
 		process.env.__OW_DEADLINE = Date.now() + 100;
-		const metrics = new NewRelic( Object.assign( FAKE_PARAMS, {
+		new NewRelic( Object.assign( {}, FAKE_PARAMS, {
 			disableActionTimeout: true
 		} ));
 		await sleep(600);
-		await metrics.send(EVENT_TYPE, { test: "value" });
-		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+		assert.ok(!mustNotHappen.isDone(), "timeout metrics was sent even though it should be disabled");
 	});
 
 	it("sendMetrics - Timeout Metrics disabled with environment variable", async function() {
-		process.env.DISABLE_ACTION_TIMEOUT_METRIC = true;
-		const nockSendEvent = expectNewRelicInsightsEvent({
-			eventType: EVENT_TYPE,
-			test: "value"
+		const mustNotHappen = expectNewRelicInsightsEvent({
+			eventType: "timeout"
 		});
+
+		process.env.DISABLE_ACTION_TIMEOUT_METRIC = true;
+
 		process.env.__OW_DEADLINE = Date.now() + 100;
-		const metrics = new NewRelic(FAKE_PARAMS);
+		 new NewRelic(FAKE_PARAMS);
 		await sleep(600); // wait to past action timeout to make sure no timeout metrics are sent
-		await metrics.send(EVENT_TYPE, { test: "value" });
-		assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+		assert.ok(!mustNotHappen.isDone(), "timeout metrics was sent even though it should be disabled");
 	});
+
+	it("add()", async function() {
+		expectNewRelicInsightsEvent({
+			eventType: EVENT_TYPE,
+			test: "value",
+			added: "metric",
+			anotherAdded: "metric"
+		});
+		expectNewRelicInsightsEvent({
+			eventType: EVENT_TYPE,
+			test: "value",
+			added: "metric2",
+			anotherAdded: "metric"
+		});
+		expectNewRelicInsightsEvent({
+			eventType: EVENT_TYPE,
+			added: "metric3",
+			anotherAdded: "metric"
+		});
+
+		const metrics = new NewRelic(FAKE_PARAMS);
+		// add metrics
+		metrics.add({
+			added: "metric",
+			anotherAdded: "metric"
+		});
+		await metrics.send(EVENT_TYPE, { test: "value" });
+
+		// overwrite previously added metrics with newly added metrics
+		metrics.add({added: "metric2"});
+		await metrics.send(EVENT_TYPE, { test: "value" });
+
+		// overwrite previously added metrics via send() metrics
+		await metrics.send(EVENT_TYPE, {added: "metric3"});
+
+		assert.ok(nock.isDone(), "metrics not properly sent");
+		metrics.activationFinished();
+	});
+
+	it("sendMetrics - Timeout Metrics with add()", async function() {
+		expectNewRelicInsightsEvent({
+			eventType: "timeout",
+			added: "metric"
+		});
+
+		process.env.__OW_DEADLINE = Date.now() + 1;
+		const metrics = new NewRelic( FAKE_PARAMS );
+		metrics.add({added: "metric"});
+		await sleep(600);
+		assert.ok(nock.isDone(), "metrics not properly sent");
+	});
+
 });
