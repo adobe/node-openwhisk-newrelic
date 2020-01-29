@@ -1,3 +1,6 @@
+<!--- when a new release happens, the VERSION and URL in the badge have to be manually updated because it's a private registry --->
+[![npm version](https://img.shields.io/badge/%40nui%2Fopenwhisk--newrelic-1.0.5-blue.svg)](https://artifactory.corp.adobe.com/artifactory/npm-nui-release/@nui/openwhisk-newrelic/-/@nui/openwhisk-newrelic-1.0.5.tgz)
+
 # node-openwhisk-newrelic
 
 Library for gathering metrics from Apache OpenWhisk actions and sending them to New Relic
