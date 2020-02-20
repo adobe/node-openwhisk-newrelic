@@ -245,7 +245,7 @@ describe("NewRelic", function() {
                 return { test: 'add_value'};
             }
         }));
-        await sleep(600);
+        await sleep(300);
         assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
     });
 
@@ -264,7 +264,7 @@ describe("NewRelic", function() {
                 };
             }
         }));
-        await sleep(600);
+        await sleep(300);
         assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
     });
 
@@ -278,7 +278,7 @@ describe("NewRelic", function() {
         new NewRelic( Object.assign( {}, FAKE_PARAMS, {
             actionTimeoutMetricsCb: { test: 'add_value'}
         }));
-        await sleep(600);
+        await sleep(300);
         assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
     });
 
@@ -291,7 +291,7 @@ describe("NewRelic", function() {
         new NewRelic( Object.assign( {}, FAKE_PARAMS, {
             disableActionTimeout: true
         } ));
-        await sleep(600);
+        await sleep(300);
         assert.ok(!mustNotHappen.isDone(), "timeout metrics was sent even though it should be disabled");
     });
 
@@ -305,7 +305,7 @@ describe("NewRelic", function() {
 
         process.env.__OW_DEADLINE = Date.now() + 100;
         new NewRelic(FAKE_PARAMS);
-        await sleep(600); // wait to past action timeout to make sure no timeout metrics are sent
+        await sleep(300); // wait to past action timeout to make sure no timeout metrics are sent
         assert.ok(!mustNotHappen.isDone(), "timeout metrics was sent even though it should be disabled");
     });
 
@@ -369,7 +369,7 @@ describe("NewRelic", function() {
         process.env.__OW_DEADLINE = Date.now() + 1;
         const metrics = new NewRelic( FAKE_PARAMS );
         metrics.add({added: "metric"});
-        await sleep(600);
+        await sleep(300);
         assert.ok(nock.isDone(), "metrics not properly sent");
     });
 
@@ -385,7 +385,7 @@ describe("NewRelic", function() {
         });
         await metrics.send(EVENT_TYPE, { test: "value" });
 
-        await sleep(600);
+        await sleep(300);
         assert.ok(nock.isDone(), "metrics not properly sent");
     });
 
