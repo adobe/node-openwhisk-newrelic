@@ -422,7 +422,7 @@ describe("NewRelic", function() {
         await metrics.send(EVENT_TYPE, { test: "value" });
         await metrics.send(EVENT_TYPE, { test: "value2" });
 
-        await sleep(500);
+        await sleep(300);
         assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
     });
 
