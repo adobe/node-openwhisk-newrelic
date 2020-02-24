@@ -373,7 +373,7 @@ describe("NewRelic", function() {
         assert.ok(nock.isDone(), "metrics not properly sent");
     });
 
-    it("sendMetrics - sent after sendIntervalMsec", async function() {
+    it("sendMetrics - send after sendIntervalMsec", async function() {
         expectNewRelicInsightsEvent({
             eventType: EVENT_TYPE,
             test: "value"
@@ -387,6 +387,28 @@ describe("NewRelic", function() {
 
         await sleep(300);
         assert.ok(nock.isDone(), "metrics not properly sent");
+
+        expectNewRelicInsightsEvent({
+            eventType: EVENT_TYPE,
+            test2: "value2"
+        });
+        await metrics.send(EVENT_TYPE, { test2: "value2" });
+
+        await sleep(300);
+        assert.ok(nock.isDone(), "metrics not properly sent after 1st sendIntervalMsec");
+
+        expectNewRelicInsightsEvent([{
+            eventType: EVENT_TYPE,
+            test3: "value3"
+        },{
+            eventType: EVENT_TYPE,
+            test4: "value4"
+        }]);
+        await metrics.send(EVENT_TYPE, { test3: "value3" });
+        await metrics.send(EVENT_TYPE, { test4: "value4" });
+
+        await sleep(300);
+        assert.ok(nock.isDone(), "metrics not properly sent after 2nd sendIntervalMsec");
     });
 
     it("sendImmediately option", async function() {
