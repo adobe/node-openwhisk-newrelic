@@ -84,3 +84,5 @@ typings/
 
 .serverless/
 .webpack
+# pipeline release config
+.releaserc.json
