@@ -37,12 +37,6 @@ const https = require('https');
 const TEST_HOST = "subdomain.example.com";
 const TEST_DOMAIN = "example.com";
 const TEST_PATH = "/test";
-const FAIL_500_PATH = "/fail500";
-const FAIL_CONNECT_PATH = "/fail-connect";
-const FAIL_CONNECT_ERROR = "connect error";
-const FAIL_CONNECT_CODE = 1234;
-const FAIL_TIMEOUT_PATH = "/timeout";
-const TEST_DELAY_PATH = "/delay";
 
 const TEST_REQUEST_ID = "test-request-id";
 
@@ -50,7 +44,8 @@ function assertMetrics(metrics, opts) {
     opts = opts || {};
     const port = opts.port || (opts.protocol === "https" ? 443: 80);
 
-    console.log("metrics:", metrics);
+    console.log("http metrics:", metrics);
+
     assert(typeof metrics === "object");
     assert.equal(metrics.host, TEST_HOST);
     assert.equal(metrics.port, port);
@@ -69,6 +64,8 @@ function assertMetrics(metrics, opts) {
     assert.ok(metrics.durationBlocked >= 0);
     assert.ok(Number.isFinite(metrics.durationBlocked));
     assert.ok(metrics.durationBlocked >= 0);
+    // disabling the durationDNS checks because
+    // with nock it does not do any DNS resolution and its always undefined
     // assert.ok(Number.isFinite(metrics.durationDNS));
     // assert.ok(metrics.durationDNS >= 0);
     assert.ok(Number.isFinite(metrics.durationConnect));
@@ -78,7 +75,11 @@ function assertMetrics(metrics, opts) {
         assert.ok(metrics.durationSSL >= 0);
     }
     assert.ok(Number.isFinite(metrics.durationSend));
+    // disabling the durationSend >= 0 check below because:
+    // with nock the order of events is incorrect and reversed,
+    // so durationSend turns out to be always negative
     // assert.ok(metrics.durationSend >= 0);
+
     assert.ok(Number.isFinite(metrics.durationWait));
     assert.ok(metrics.durationWait >= 0);
     assert.ok(Number.isFinite(metrics.durationReceive));
@@ -111,15 +112,7 @@ describe("probe http-client", function() {
     beforeEach(function() {
         nock(`http://${TEST_HOST}`).get(TEST_PATH).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
         nock(`https://${TEST_HOST}`).get(TEST_PATH).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
-        nock(`http://${TEST_HOST}`).get(FAIL_500_PATH).reply(500, {ok: false}, {"x-request-id": TEST_REQUEST_ID});
         nock(`http://${TEST_HOST}`).post(TEST_PATH).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
-
-        const err = new Error(FAIL_CONNECT_ERROR);
-        err.code = FAIL_CONNECT_CODE;
-        nock(`http://${TEST_HOST}`).get(FAIL_CONNECT_PATH).replyWithError(err);
-
-        nock(`http://${TEST_HOST}`).get(FAIL_TIMEOUT_PATH).socketDelay(2000).reply(200);
-        nock(`http://${TEST_HOST}`).get(TEST_DELAY_PATH).delayBody(300).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
 
         delete this.metrics;
         instrumentHttpClient.start((metrics) => {
@@ -202,6 +195,9 @@ describe("probe http-client", function() {
         });
 
         it("fetch http status 500", async function() {
+            const FAIL_500_PATH = "/fail500";
+            nock(`http://${TEST_HOST}`).get(FAIL_500_PATH).reply(500, {ok: false}, {"x-request-id": TEST_REQUEST_ID});
+
             await fetch(`http://${TEST_HOST}${FAIL_500_PATH}`);
 
             // wait for async response event
@@ -215,6 +211,13 @@ describe("probe http-client", function() {
         });
 
         it("fetch http fail with connect error", async function() {
+            const FAIL_CONNECT_PATH = "/fail-connect";
+            const FAIL_CONNECT_ERROR = "connect error";
+            const FAIL_CONNECT_CODE = 1234;
+            const err = new Error(FAIL_CONNECT_ERROR);
+            err.code = FAIL_CONNECT_CODE;
+            nock(`http://${TEST_HOST}`).get(FAIL_CONNECT_PATH).replyWithError(err);
+
             try {
                 await fetch(`http://${TEST_HOST}${FAIL_CONNECT_PATH}`, {
                     timeout: 100
@@ -251,6 +254,9 @@ describe("probe http-client", function() {
         });
 
         it("fetch http delay", async function() {
+            const TEST_DELAY_PATH = "/delay";
+            nock(`http://${TEST_HOST}`).get(TEST_DELAY_PATH).delayBody(300).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
+
             const response = await fetch(`http://${TEST_HOST}${TEST_DELAY_PATH}`);
             const json = await response.json();
 
@@ -260,7 +266,11 @@ describe("probe http-client", function() {
             assertMetrics(this.metrics, {
                 path: TEST_DELAY_PATH
             });
-            assert.ok(this.metrics.durationWait >= 300);
+            assert.ok(
+                // allow 10% deviation = * 0.9
+                this.metrics.durationWait >= 300 * 0.9,
+                `durationWait is not >= 300 (with 10% margin): ${this.metrics.durationWait}`
+            );
         });
 
         it.skip("fetch http - httpbin playground", async function() {
@@ -378,6 +388,9 @@ describe("probe http-client", function() {
         });
 
         it("node http timeout", async function() {
+            const FAIL_TIMEOUT_PATH = "/timeout";
+            nock(`http://${TEST_HOST}`).get(FAIL_TIMEOUT_PATH).socketDelay(2000).reply(200);
+
             await httpRequest(http, `http://${TEST_HOST}${FAIL_TIMEOUT_PATH}`);
 
             assertErrorMetrics(this.metrics, {
