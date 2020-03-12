@@ -227,7 +227,7 @@ describe("NewRelic", function() {
             duration: /\d+/
         });
 
-        process.env.__OW_DEADLINE = Date.now() + 1;
+        process.env.__OW_DEADLINE = Date.now() + 100;
         new NewRelic( FAKE_PARAMS );
         await sleep(500);
         assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
