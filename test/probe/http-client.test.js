@@ -2,7 +2,7 @@
 * ADOBE CONFIDENTIAL
 * ___________________
 *
-* Copyright 2019 Adobe
+* Copyright 2020 Adobe
 * All Rights Reserved.
 *
 * NOTICE: All information contained herein is, and remains
@@ -115,6 +115,7 @@ describe("probe http-client", function() {
         nock(`http://${TEST_HOST}`).post(TEST_PATH).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
 
         delete this.metrics;
+        instrumentHttpClient.stop();
         instrumentHttpClient.start((metrics) => {
             this.metrics = metrics;
         });

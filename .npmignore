@@ -86,3 +86,6 @@ typings/
 .webpack
 # pipeline release config
 .releaserc.json
+
+# checked out for test cases
+node-fetch/

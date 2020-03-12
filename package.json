@@ -14,6 +14,7 @@
     "url": "https://git.corp.adobe.com/nui/node-openwhisk-newrelic.git"
   },
   "dependencies": {
+    "cls-hooked": "^4.2.2",
     "node-fetch": "^2.6.0"
   },
   "devDependencies": {
