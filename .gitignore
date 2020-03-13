@@ -63,3 +63,6 @@ typings/
 
 .serverless/
 .webpack
+
+# checked out for test cases
+node-fetch/

@@ -227,7 +227,7 @@ describe("NewRelic", function() {
             duration: /\d+/
         });
 
-        process.env.__OW_DEADLINE = Date.now() + 1;
+        process.env.__OW_DEADLINE = Date.now() + 100;
         new NewRelic( FAKE_PARAMS );
         await sleep(500);
         assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
@@ -366,7 +366,7 @@ describe("NewRelic", function() {
             duration: /\d+/
         });
 
-        process.env.__OW_DEADLINE = Date.now() + 1;
+        process.env.__OW_DEADLINE = Date.now() + 100;
         const metrics = new NewRelic( FAKE_PARAMS );
         metrics.add({added: "metric"});
         await sleep(300);
@@ -438,7 +438,7 @@ describe("NewRelic", function() {
             duration: /\d+/
         }]);
 
-        process.env.__OW_DEADLINE = Date.now() + 1;
+        process.env.__OW_DEADLINE = Date.now() + 100;
         const metrics = new NewRelic( FAKE_PARAMS );
 
         await metrics.send(EVENT_TYPE, { test: "value" });
