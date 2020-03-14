@@ -89,3 +89,4 @@ typings/
 
 # checked out for test cases
 node-fetch/
+.babelrc
