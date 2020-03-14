@@ -492,6 +492,27 @@ describe("NewRelic", function() {
         });
     });
 
+    describe("instrument", function() {
+        it("instrument() should wrap action main", async function() {
+
+            function main(params) {
+                assert.equal(typeof params, "object");
+
+                // passed in params
+                assert.equal(params.key, "value");
+
+                return { ok: true};
+            }
+
+            const wrappedMain = NewRelic.instrument(main);
+
+            const result = await wrappedMain({
+                key: "value"
+            });
+            assert.equal(result.ok, true)
+        });
+    });
+
     describe("http metrics", function() {
         it("should send metric for http requests", async function() {
             nock(`http://example.com`).get("/test").reply(200, {ok: true});
