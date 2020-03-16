@@ -30,7 +30,7 @@
   },
   "scripts": {
     "test": "nyc --reporter=html --reporter=text mocha test --recursive && npm run node-fetch-test",
-    "node-fetch-test": "git clone https://github.com/node-fetch/node-fetch.git; cd node-fetch; npm install && npm test -- --file ../test/probe/node-fetch.setup.js.txt",
+    "node-fetch-test": "rm -rf node-fetch; git clone https://github.com/node-fetch/node-fetch.git; cd node-fetch; git checkout b44c29521d61e0badb0220ac4d59bcfeef986ea2; npm install && npm test -- --file ../test/probe/node-fetch.setup.js.txt",
     "posttest": "eslint ./"
   },
   "mocha": {
