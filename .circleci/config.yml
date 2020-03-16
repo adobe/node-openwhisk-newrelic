@@ -80,7 +80,6 @@ jobs:
             git clone git@git.corp.adobe.com:nui/circleci.git
             cd circleci
             git pull
-            git checkout script-files
             cat build_runtime.sh
             ./build_runtime.sh           
       - persist_to_workspace:
@@ -111,7 +110,6 @@ jobs:
             git clone git@git.corp.adobe.com:nui/circleci.git
             cd circleci
             git pull
-            git checkout script-files
             cat build.sh
             ./build.sh
       - *test_results_build
@@ -144,7 +142,6 @@ jobs:
             git clone git@git.corp.adobe.com:nui/circleci.git
             cd circleci
             git pull
-            git checkout script-files
             cat dependent-module-tests-step-1.sh
             ./dependent-module-tests-step-1.sh
       - run:
@@ -182,17 +179,16 @@ jobs:
             # allow user circleci to make global npm installations
             sudo chown -R circleci /usr/local/ && chmod -R u+x+w /usr/local/
       - run:
-          name: Get dependents, Install and pack
+          name: Get dependents, Install and pack (deploy-app-step-1.sh)
           command: |
             cd ~
             git clone git@git.corp.adobe.com:nui/circleci.git
             cd circleci
             git pull
-            git checkout script-files
             cat deploy-app-step-1.sh
             ./deploy-app-step-1.sh
       - run:
-          name: Deploy unique integration test environment
+          name: Deploy unique integration test environment (deploy-app-step-2.sh)
           command: |
             cd ~/circleci
             cat deploy-app-step-2.sh
@@ -247,7 +243,6 @@ jobs:
             git clone git@git.corp.adobe.com:nui/circleci.git
             cd circleci
             git pull
-            git checkout script-files
             cat release.sh
             ./release.sh
             
@@ -273,7 +268,6 @@ jobs:
             git clone git@git.corp.adobe.com:nui/circleci.git
             cd circleci
             git pull
-            git checkout script-files
             cat dependent-version-update.sh
             ./dependent-version-update.sh
               
