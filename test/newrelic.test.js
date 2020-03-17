@@ -21,23 +21,18 @@
 "use strict";
 
 const NewRelic = require('../lib/newrelic');
-const sendQueue = require('../lib/queue');
+const MetricsTestHelper = require('../lib/testhelper');
 
 const assert = require("assert");
 const nock = require('nock');
-const zlib = require('zlib');
-const { promisify } = require('util');
-const sleep = promisify(setTimeout);
+const sleep = require('util').promisify(setTimeout);
 const fetch = require("node-fetch");
 
-const NR_FAKE_BASE_URL = "http://newrelic.com";
-const NR_FAKE_EVENTS_PATH = "/events";
-const NR_FAKE_API_KEY = "new-relic-api-key";
 const EVENT_TYPE = "myevent";
 
 const FAKE_PARAMS = Object.freeze({
-    newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
-    newRelicApiKey: NR_FAKE_API_KEY,
+    newRelicEventsURL: MetricsTestHelper.MOCK_URL,
+    newRelicApiKey: MetricsTestHelper.MOCK_API_KEY,
     sendIntervalMs: 10
 });
 
@@ -60,53 +55,6 @@ function assertObjectMatches(actual, expected) {
     }
 }
 
-function gunzip(body, log=false) {
-    body = Buffer.from(body, 'hex');
-    body = zlib.gunzipSync(body).toString();
-    if (log) {
-        console.log("New Relic received:", body);
-    }
-    return body;
-}
-
-/**
- * @deprecated please use nockNewRelic() instead
- */
-function expectNewRelicInsightsEvent(metrics, statusCode=200, defaultExpectedMetrics=true) {
-    if (!Array.isArray(metrics)) {
-        metrics = [metrics];
-    }
-    metrics = metrics.map(m => ({
-        ...(defaultExpectedMetrics ? EXPECTED_METRICS : {}),
-        ...m
-    }));
-
-    return nock(NR_FAKE_BASE_URL)
-        .filteringRequestBody((body) => gunzip(body, true))
-        .matchHeader("x-insert-key", NR_FAKE_API_KEY)
-        .post(NR_FAKE_EVENTS_PATH, metrics)
-        .reply(statusCode, {});
-}
-
-function nockNewRelic() {
-    const receivedMetrics = [];
-    nock(NR_FAKE_BASE_URL)
-        .filteringRequestBody((body) => gunzip(body, false))
-        .matchHeader("x-insert-key", NR_FAKE_API_KEY)
-        .post(NR_FAKE_EVENTS_PATH, metrics => {
-            receivedMetrics.push(...metrics);
-            return true;
-        })
-        .reply(200, {})
-        .persist();
-    return receivedMetrics;
-}
-
-async function metricsDone(timeout=100) {
-    await sleep(timeout);
-    assert.ok(nock.isDone(), "Did not receive any metrics. Timeout too short?");
-}
-
 describe("NewRelic", function() {
 
     beforeEach(function() {
@@ -117,6 +65,7 @@ describe("NewRelic", function() {
 
         // wrap all tests with the required instrumentation
         this.currentTest.fn = NewRelic.instrument(this.currentTest.fn);
+        MetricsTestHelper.beforeTest();
     });
 
     afterEach(function() {
@@ -126,9 +75,7 @@ describe("NewRelic", function() {
         delete process.env.__OW_ACTIVATION_ID;
         delete process.env.__OW_DEADLINE;
 
-        NewRelic.stopInstrument();
-        sendQueue.stop();
-        nock.cleanAll();
+        MetricsTestHelper.afterTest();
     });
 
     describe("constructor", function() {
@@ -142,7 +89,7 @@ describe("NewRelic", function() {
         it("constructor should log but not throw error if url is blank string", async function() {
             const params = {
                 newRelicEventsURL: '\n',
-                newRelicApiKey: NR_FAKE_API_KEY,
+                newRelicApiKey: MetricsTestHelper.MOCK_API_KEY
             };
 
             const metrics = new NewRelic(params);
@@ -153,7 +100,7 @@ describe("NewRelic", function() {
         it("constructor should log but not throw error if url is null", async function() {
             const params = {
                 newRelicEventsURL: null,
-                newRelicApiKey: NR_FAKE_API_KEY,
+                newRelicApiKey: MetricsTestHelper.MOCK_API_KEY
             };
 
             const metrics = new NewRelic(params);
@@ -163,7 +110,7 @@ describe("NewRelic", function() {
 
         it("constructor should log but not throw error if api key is blank string", async function() {
             const params = {
-                newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
+                newRelicEventsURL: MetricsTestHelper.MOCK_URL,
                 newRelicApiKey: '\n'
             };
 
@@ -174,7 +121,7 @@ describe("NewRelic", function() {
 
         it("constructor should log but not throw error if api key is not a string", async function() {
             const params = {
-                newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
+                newRelicEventsURL: MetricsTestHelper.MOCK_URL,
                 newRelicApiKey: 2
             };
 
@@ -185,7 +132,7 @@ describe("NewRelic", function() {
 
         it("constructor should log but not throw error if api key is undefined", async function() {
             const params = {
-                newRelicEventsURL: `${NR_FAKE_BASE_URL}${NR_FAKE_EVENTS_PATH}`,
+                newRelicEventsURL: MetricsTestHelper.MOCK_URL
             };
 
             const metrics = new NewRelic(params);
@@ -197,69 +144,78 @@ describe("NewRelic", function() {
     describe("send()", function() {
 
         it("sendMetrics", async function() {
-            const nockSendEvent = expectNewRelicInsightsEvent({
-                eventType: EVENT_TYPE,
-                test: "value"
-            });
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
+
             const metrics = new NewRelic(FAKE_PARAMS);
             await metrics.send(EVENT_TYPE, { test: "value" });
             await metrics.activationFinished();
-            await sleep(100);
-            assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-        });
+
+            await MetricsTestHelper.metricsDone();
+            assert.equal(receivedMetrics.length, 1);
+            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
+            assertObjectMatches(receivedMetrics[0], {
+                eventType: EVENT_TYPE,
+                test: "value"
+            });
+    });
 
         it("sendMetrics - default metrics frozen object", async function() {
-            expectNewRelicInsightsEvent({
-                eventType: EVENT_TYPE,
-                test: "value",
-                duration:2000
-            });
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
+
             const defaultMetrics = Object.freeze({
-                duration:2000
+                duration: 2000
             });
             const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
             await metrics.send(EVENT_TYPE, { test: "value" });
             await metrics.activationFinished();
-            await metricsDone();
+
+            await MetricsTestHelper.metricsDone();
+            assert.equal(receivedMetrics.length, 1);
+            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
+            assertObjectMatches(receivedMetrics[0], {
+                eventType: EVENT_TYPE,
+                test: "value",
+                duration: 2000
+            });
         });
 
         it("sendMetrics - default metrics", async function() {
-            expectNewRelicInsightsEvent({
-                eventType: EVENT_TYPE,
-                test: "value",
-                duration:2000
-            });
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
+
             const defaultMetrics = {
                 duration: 2000
             };
             const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
             await metrics.send(EVENT_TYPE, { test: "value" });
             await metrics.activationFinished();
-            await metricsDone();
+
+            await MetricsTestHelper.metricsDone();
+            assert.equal(receivedMetrics.length, 1);
+            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
+            assertObjectMatches(receivedMetrics[0], {
+                eventType: EVENT_TYPE,
+                test: "value",
+                duration: 2000
+            });
             assert.equal(Object.keys(defaultMetrics), "duration");
             assert.equal(defaultMetrics.duration, 2000);
         });
 
         it("sendMetrics - fail with 500 but not throw error", async function() {
-            expectNewRelicInsightsEvent({
-                eventType: EVENT_TYPE,
-                test: "value"
-            }, 500);
+            nock(MetricsTestHelper.MOCK_BASE_URL)
+                .post(MetricsTestHelper.MOCK_URL_PATH)
+                .reply(500)
+
             const metrics = new NewRelic(FAKE_PARAMS);
             await metrics.send(EVENT_TYPE, { test: "value" });
             await metrics.activationFinished();
-            await metricsDone();
+
+            await MetricsTestHelper.metricsDone();
         });
 
         it("sendMetrics - request throws error but it is handled", async function() {
-            nock(NR_FAKE_BASE_URL)
-                .filteringRequestBody(gunzip)
-                .matchHeader("x-insert-key", NR_FAKE_API_KEY)
-                .post(NR_FAKE_EVENTS_PATH, [{
-                    ...EXPECTED_METRICS,
-                    eventType: EVENT_TYPE,
-                    test: "value"
-                }])
+            nock(MetricsTestHelper.MOCK_BASE_URL)
+                .post(MetricsTestHelper.MOCK_URL_PATH)
                 .replyWithError("faked error");
 
             const metrics = new NewRelic({
@@ -267,11 +223,12 @@ describe("NewRelic", function() {
             });
             await metrics.send(EVENT_TYPE, { test: "value" });
             await metrics.activationFinished();
-            await metricsDone();
+
+            await MetricsTestHelper.metricsDone();
         });
 
         it("sendMetrics - for concurrent activations", async function() {
-            const receivedMetrics = nockNewRelic();
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             // simulate a bunch of concurrent activations
             const ACTIVATION_COUNT = 200;
@@ -296,7 +253,7 @@ describe("NewRelic", function() {
             }
             await Promise.all(activations);
 
-            await metricsDone(500);
+            await MetricsTestHelper.metricsDone(500);
 
             assert.equal(receivedMetrics.length, ACTIVATION_COUNT);
             receivedMetrics.forEach(m => {
@@ -318,21 +275,7 @@ describe("NewRelic", function() {
     });
 
     it("add()", async function() {
-        expectNewRelicInsightsEvent([{
-            eventType: EVENT_TYPE,
-            test: "value",
-            added: "metric",
-            anotherAdded: "metric"
-        },{
-            eventType: EVENT_TYPE,
-            test: "value",
-            added: "metric2",
-            anotherAdded: "metric"
-        },{
-            eventType: EVENT_TYPE,
-            added: "metric3",
-            anotherAdded: "metric"
-        }]);
+        const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
         const metrics = new NewRelic(FAKE_PARAMS);
         // add metrics
@@ -350,8 +293,30 @@ describe("NewRelic", function() {
         await metrics.send(EVENT_TYPE, {added: "metric3"});
 
         await metrics.activationFinished();
-        await metricsDone();
-    });
+
+        await MetricsTestHelper.metricsDone();
+        assert.equal(receivedMetrics.length, 3);
+        assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
+        assertObjectMatches(receivedMetrics[0], {
+            eventType: EVENT_TYPE,
+            test: "value",
+            added: "metric",
+            anotherAdded: "metric"
+        });
+        assertObjectMatches(receivedMetrics[1], EXPECTED_METRICS);
+        assertObjectMatches(receivedMetrics[1], {
+            eventType: EVENT_TYPE,
+            test: "value",
+            added: "metric2",
+            anotherAdded: "metric"
+        });
+        assertObjectMatches(receivedMetrics[2], EXPECTED_METRICS);
+        assertObjectMatches(receivedMetrics[2], {
+            eventType: EVENT_TYPE,
+            added: "metric3",
+            anotherAdded: "metric"
+        });
+});
 
     it("get()", async function() {
 
@@ -370,21 +335,22 @@ describe("NewRelic", function() {
     describe("timeout metrics", function() {
 
         it("timeout metrics", async function() {
-            expectNewRelicInsightsEvent({
-                eventType: "timeout",
-                duration: /\d+/
-            });
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             process.env.__OW_DEADLINE = Date.now() + 100;
             new NewRelic( FAKE_PARAMS );
-            await metricsDone();
+
+            await MetricsTestHelper.metricsDone();
+            assert.equal(receivedMetrics.length, 1);
+            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
+            assertObjectMatches(receivedMetrics[0], {
+                eventType: "timeout",
+                duration: /\d+/
+            });
         });
 
         it("timeout metrics with callback", async function() {
-            const nockSendEvent = expectNewRelicInsightsEvent({
-                eventType: "timeout",
-                test: 'add_value'
-            });
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             process.env.__OW_DEADLINE = Date.now() + 100;
             new NewRelic( Object.assign( {}, FAKE_PARAMS, {
@@ -392,15 +358,18 @@ describe("NewRelic", function() {
                     return { test: 'add_value'};
                 }
             }));
-            await sleep(300);
-            assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+
+            await MetricsTestHelper.metricsDone(300);
+            assert.equal(receivedMetrics.length, 1);
+            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
+            assertObjectMatches(receivedMetrics[0], {
+                eventType: "timeout",
+                test: 'add_value'
+            });
         });
 
         it("timeout metrics with callback, custom eventType", async function() {
-            const nockSendEvent = expectNewRelicInsightsEvent({
-                eventType: "custom",
-                test: 'add_value'
-            });
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             process.env.__OW_DEADLINE = Date.now() + 100;
             new NewRelic( Object.assign( {}, FAKE_PARAMS, {
@@ -411,29 +380,38 @@ describe("NewRelic", function() {
                     };
                 }
             }));
-            await sleep(300);
-            assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
+
+            await MetricsTestHelper.metricsDone(300);
+            assert.equal(receivedMetrics.length, 1);
+            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
+            assertObjectMatches(receivedMetrics[0], {
+                eventType: "custom",
+                test: 'add_value'
+            });
         });
 
         it("timeout metrics with invalid callback", async function() {
-            const nockSendEvent = expectNewRelicInsightsEvent({
-                eventType: "timeout",
-                duration: /\d+/
-            });
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             process.env.__OW_DEADLINE = Date.now() + 100;
             new NewRelic( Object.assign( {}, FAKE_PARAMS, {
                 actionTimeoutMetricsCb: { test: 'add_value'}
             }));
-            await sleep(300);
-            assert.ok(nockSendEvent.isDone(), "metrics not properly sent");
-        });
 
-        it("timeout metrics disabled with options", async function() {
-            const mustNotHappen = expectNewRelicInsightsEvent({
+            await MetricsTestHelper.metricsDone(300);
+            assert.equal(receivedMetrics.length, 1);
+            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
+            assertObjectMatches(receivedMetrics[0], {
                 eventType: "timeout",
                 duration: /\d+/
             });
+        });
+
+        it("timeout metrics disabled with options", async function() {
+            const mustNotHappen = nock(MetricsTestHelper.MOCK_BASE_URL)
+                .post(MetricsTestHelper.MOCK_URL_PATH)
+                .reply(200)
+
             process.env.__OW_DEADLINE = Date.now() + 100;
             new NewRelic( Object.assign( {}, FAKE_PARAMS, {
                 disableActionTimeout: true
@@ -443,10 +421,9 @@ describe("NewRelic", function() {
         });
 
         it("timeout metrics disabled with environment variable", async function() {
-            const mustNotHappen = expectNewRelicInsightsEvent({
-                eventType: "timeout",
-                duration: /\d+/
-            });
+            const mustNotHappen = nock(MetricsTestHelper.MOCK_BASE_URL)
+                .post(MetricsTestHelper.MOCK_URL_PATH)
+                .reply(200)
 
             process.env.DISABLE_ACTION_TIMEOUT_METRIC = true;
 
@@ -457,30 +434,24 @@ describe("NewRelic", function() {
         });
 
         it("timeout metrics with add()", async function() {
-            expectNewRelicInsightsEvent({
-                eventType: "timeout",
-                added: "metric",
-                duration: /\d+/
-            });
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             process.env.__OW_DEADLINE = Date.now() + 100;
             const metrics = new NewRelic( FAKE_PARAMS );
             metrics.add({added: "metric"});
-            await sleep(300);
-            assert.ok(nock.isDone(), "metrics not properly sent");
+
+            await MetricsTestHelper.metricsDone(300);
+            assert.equal(receivedMetrics.length, 1);
+            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
+            assertObjectMatches(receivedMetrics[0], {
+                eventType: "timeout",
+                added: "metric",
+                duration: /\d+/
+            });
         });
 
         it("send all queued metrics on timeout", async function() {
-            expectNewRelicInsightsEvent([{
-                eventType: EVENT_TYPE,
-                test: "value"
-            },{
-                eventType: EVENT_TYPE,
-                test: "value2"
-            },{
-                eventType: "timeout",
-                duration: /\d+/
-            }]);
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             process.env.__OW_DEADLINE = Date.now() + 100;
             const metrics = new NewRelic( FAKE_PARAMS );
@@ -488,7 +459,23 @@ describe("NewRelic", function() {
             await metrics.send(EVENT_TYPE, { test: "value" });
             await metrics.send(EVENT_TYPE, { test: "value2" });
 
-            await metricsDone(300);
+            await MetricsTestHelper.metricsDone(300);
+            assert.equal(receivedMetrics.length, 3);
+            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
+            assertObjectMatches(receivedMetrics[0], {
+                eventType: EVENT_TYPE,
+                test: "value"
+            });
+            assertObjectMatches(receivedMetrics[1], EXPECTED_METRICS);
+            assertObjectMatches(receivedMetrics[1], {
+                eventType: EVENT_TYPE,
+                test: "value2"
+            });
+            assertObjectMatches(receivedMetrics[2], EXPECTED_METRICS);
+            assertObjectMatches(receivedMetrics[2], {
+                eventType: "timeout",
+                duration: /\d+/
+            });
         });
     });
 
@@ -516,14 +503,14 @@ describe("NewRelic", function() {
     describe("http metrics", function() {
         it("should send metric for http requests", async function() {
             nock(`http://example.com`).get("/test").reply(200, {ok: true});
-            const receivedMetrics = nockNewRelic();
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             const metrics = new NewRelic( FAKE_PARAMS );
 
             await fetch("http://example.com/test")
 
             await metrics.activationFinished();
-            await metricsDone();
+            await MetricsTestHelper.metricsDone();
 
             assert.equal(receivedMetrics.length, 1);
             assert.equal(receivedMetrics[0].eventType, "http");
@@ -535,7 +522,7 @@ describe("NewRelic", function() {
         it("should send http metrics for concurrent activations", async function() {
 
             nock(`http://example.com`).get("/test").reply(200, {ok: true}).persist();
-            const receivedMetrics = nockNewRelic();
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             // simulate a bunch of concurrent activations
             const ACTIVATION_COUNT = 200;
@@ -565,7 +552,7 @@ describe("NewRelic", function() {
             }
             await Promise.all(activations);
 
-            await metricsDone(500);
+            await MetricsTestHelper.metricsDone(500);
 
             assert.equal(receivedMetrics.length, ACTIVATION_COUNT * 4);
             receivedMetrics.forEach(m => {
