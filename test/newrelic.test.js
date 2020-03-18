@@ -53,7 +53,6 @@ describe("NewRelic", function() {
 
         // wrap all tests with the required instrumentation
         this.currentTest.fn = NewRelic.instrument(this.currentTest.fn);
-        MetricsTestHelper.beforeTest();
     });
 
     afterEach(function() {
@@ -63,7 +62,7 @@ describe("NewRelic", function() {
         delete process.env.__OW_ACTIVATION_ID;
         delete process.env.__OW_DEADLINE;
 
-        MetricsTestHelper.afterTest();
+        MetricsTestHelper.afterEachTest();
     });
 
     describe("constructor", function() {
