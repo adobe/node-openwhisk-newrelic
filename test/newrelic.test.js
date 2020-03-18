@@ -16,7 +16,6 @@
 **************************************************************************/
 
 /* eslint-env mocha */
-/* eslint-disable mocha/no-mocha-arrows */
 
 "use strict";
 
@@ -43,17 +42,6 @@ const EXPECTED_METRICS = Object.freeze({
     package: "package",
     timestamp: /\d+/
 });
-
-function assertObjectMatches(actual, expected) {
-    for (const key in expected) {
-        const value = expected[key];
-        if (value instanceof RegExp) {
-            assert(value.test(actual[key]));
-        } else {
-            assert.strictEqual(actual[key], value, `property '${key}' does not match`);
-        }
-    }
-}
 
 describe("NewRelic", function() {
 
@@ -151,13 +139,12 @@ describe("NewRelic", function() {
             await metrics.activationFinished();
 
             await MetricsTestHelper.metricsDone();
-            assert.equal(receivedMetrics.length, 1);
-            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
-            assertObjectMatches(receivedMetrics[0], {
+            MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
+                ...EXPECTED_METRICS,
                 eventType: EVENT_TYPE,
                 test: "value"
-            });
-    });
+            }]);
+        });
 
         it("sendMetrics - default metrics frozen object", async function() {
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
@@ -170,13 +157,12 @@ describe("NewRelic", function() {
             await metrics.activationFinished();
 
             await MetricsTestHelper.metricsDone();
-            assert.equal(receivedMetrics.length, 1);
-            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
-            assertObjectMatches(receivedMetrics[0], {
+            MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
+                ...EXPECTED_METRICS,
                 eventType: EVENT_TYPE,
                 test: "value",
                 duration: 2000
-            });
+            }]);
         });
 
         it("sendMetrics - default metrics", async function() {
@@ -190,13 +176,12 @@ describe("NewRelic", function() {
             await metrics.activationFinished();
 
             await MetricsTestHelper.metricsDone();
-            assert.equal(receivedMetrics.length, 1);
-            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
-            assertObjectMatches(receivedMetrics[0], {
+            MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
+                ...EXPECTED_METRICS,
                 eventType: EVENT_TYPE,
                 test: "value",
                 duration: 2000
-            });
+            }]);
             assert.equal(Object.keys(defaultMetrics), "duration");
             assert.equal(defaultMetrics.duration, 2000);
         });
@@ -258,9 +243,7 @@ describe("NewRelic", function() {
             assert.equal(receivedMetrics.length, ACTIVATION_COUNT);
             receivedMetrics.forEach(m => {
                 assert.equal(m.eventType, EVENT_TYPE);
-                // assert.equal(m.url, "http://example.com/test");
-                // assert.equal(m.responseCode, 200);
-                assertObjectMatches(m, {
+                MetricsTestHelper.assertObjectMatches(m, {
                     actionName: "action",
                     namespace: "namespace",
                     package: "package",
@@ -295,27 +278,24 @@ describe("NewRelic", function() {
         await metrics.activationFinished();
 
         await MetricsTestHelper.metricsDone();
-        assert.equal(receivedMetrics.length, 3);
-        assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
-        assertObjectMatches(receivedMetrics[0], {
+        MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
+            ...EXPECTED_METRICS,
             eventType: EVENT_TYPE,
             test: "value",
             added: "metric",
             anotherAdded: "metric"
-        });
-        assertObjectMatches(receivedMetrics[1], EXPECTED_METRICS);
-        assertObjectMatches(receivedMetrics[1], {
+        },{
+            ...EXPECTED_METRICS,
             eventType: EVENT_TYPE,
             test: "value",
             added: "metric2",
             anotherAdded: "metric"
-        });
-        assertObjectMatches(receivedMetrics[2], EXPECTED_METRICS);
-        assertObjectMatches(receivedMetrics[2], {
+        },{
+            ...EXPECTED_METRICS,
             eventType: EVENT_TYPE,
             added: "metric3",
             anotherAdded: "metric"
-        });
+        }]);
 });
 
     it("get()", async function() {
@@ -341,12 +321,11 @@ describe("NewRelic", function() {
             new NewRelic( FAKE_PARAMS );
 
             await MetricsTestHelper.metricsDone();
-            assert.equal(receivedMetrics.length, 1);
-            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
-            assertObjectMatches(receivedMetrics[0], {
+            MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
+                ...EXPECTED_METRICS,
                 eventType: "timeout",
                 duration: /\d+/
-            });
+            }]);
         });
 
         it("timeout metrics with callback", async function() {
@@ -360,12 +339,11 @@ describe("NewRelic", function() {
             }));
 
             await MetricsTestHelper.metricsDone(300);
-            assert.equal(receivedMetrics.length, 1);
-            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
-            assertObjectMatches(receivedMetrics[0], {
+            MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
+                ...EXPECTED_METRICS,
                 eventType: "timeout",
                 test: 'add_value'
-            });
+            }]);
         });
 
         it("timeout metrics with callback, custom eventType", async function() {
@@ -382,12 +360,11 @@ describe("NewRelic", function() {
             }));
 
             await MetricsTestHelper.metricsDone(300);
-            assert.equal(receivedMetrics.length, 1);
-            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
-            assertObjectMatches(receivedMetrics[0], {
+            MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
+                ...EXPECTED_METRICS,
                 eventType: "custom",
                 test: 'add_value'
-            });
+            }]);
         });
 
         it("timeout metrics with invalid callback", async function() {
@@ -399,12 +376,11 @@ describe("NewRelic", function() {
             }));
 
             await MetricsTestHelper.metricsDone(300);
-            assert.equal(receivedMetrics.length, 1);
-            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
-            assertObjectMatches(receivedMetrics[0], {
+            MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
+                ...EXPECTED_METRICS,
                 eventType: "timeout",
                 duration: /\d+/
-            });
+            }]);
         });
 
         it("timeout metrics disabled with options", async function() {
@@ -441,13 +417,12 @@ describe("NewRelic", function() {
             metrics.add({added: "metric"});
 
             await MetricsTestHelper.metricsDone(300);
-            assert.equal(receivedMetrics.length, 1);
-            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
-            assertObjectMatches(receivedMetrics[0], {
+            MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
+                ...EXPECTED_METRICS,
                 eventType: "timeout",
                 added: "metric",
                 duration: /\d+/
-            });
+            }]);
         });
 
         it("send all queued metrics on timeout", async function() {
@@ -460,22 +435,20 @@ describe("NewRelic", function() {
             await metrics.send(EVENT_TYPE, { test: "value2" });
 
             await MetricsTestHelper.metricsDone(300);
-            assert.equal(receivedMetrics.length, 3);
-            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
-            assertObjectMatches(receivedMetrics[0], {
+            // order is not required
+            MetricsTestHelper.assertArrayContains(receivedMetrics, [{
+                ...EXPECTED_METRICS,
                 eventType: EVENT_TYPE,
                 test: "value"
-            });
-            assertObjectMatches(receivedMetrics[1], EXPECTED_METRICS);
-            assertObjectMatches(receivedMetrics[1], {
+            },{
+                ...EXPECTED_METRICS,
                 eventType: EVENT_TYPE,
                 test: "value2"
-            });
-            assertObjectMatches(receivedMetrics[2], EXPECTED_METRICS);
-            assertObjectMatches(receivedMetrics[2], {
+            },{
+                ...EXPECTED_METRICS,
                 eventType: "timeout",
                 duration: /\d+/
-            });
+            }]);
         });
     });
 
@@ -506,21 +479,19 @@ describe("NewRelic", function() {
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             const metrics = new NewRelic( FAKE_PARAMS );
-
             await fetch("http://example.com/test")
-
             await metrics.activationFinished();
-            await MetricsTestHelper.metricsDone();
 
-            assert.equal(receivedMetrics.length, 1);
-            assert.equal(receivedMetrics[0].eventType, "http");
-            assert.equal(receivedMetrics[0].url, "http://example.com/test");
-            assert.equal(receivedMetrics[0].responseCode, 200);
-            assertObjectMatches(receivedMetrics[0], EXPECTED_METRICS);
+            await MetricsTestHelper.metricsDone();
+            MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
+                ...EXPECTED_METRICS,
+                eventType: "http",
+                url: "http://example.com/test",
+                responseCode: 200
+            }]);
         });
 
         it("should send http metrics for concurrent activations", async function() {
-
             nock(`http://example.com`).get("/test").reply(200, {ok: true}).persist();
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
@@ -556,14 +527,15 @@ describe("NewRelic", function() {
 
             assert.equal(receivedMetrics.length, ACTIVATION_COUNT * 4);
             receivedMetrics.forEach(m => {
-                assert.equal(m.eventType, "http");
-                assert.equal(m.url, "http://example.com/test");
-                assert.equal(m.responseCode, 200);
-                assertObjectMatches(m, {
+                MetricsTestHelper.assertObjectMatches(m, {
                     actionName: "action",
                     namespace: "namespace",
                     package: "package",
-                    timestamp: /\d+/
+                    timestamp: /\d+/,
+
+                    eventType: "http",
+                    url: "http://example.com/test",
+                    responseCode: 200
                 });
             });
             // make sure all activation ids are found, but could be any order
