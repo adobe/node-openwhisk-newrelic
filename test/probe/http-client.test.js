@@ -33,6 +33,7 @@ const request = require("request-promise-native");
 const axios = require('axios');
 const http = require('http');
 const https = require('https');
+const needle = require('needle');
 
 
 const TEST_HOST = "subdomain.example.com";
@@ -400,6 +401,21 @@ describe("probe http-client", function() {
                 errorMessage: "Connection timed out",
                 errorCode: 110
             });
+        });
+    });
+
+    // used by npm openwhisk library (action invocations)
+    describe("needle", function() {
+        it("needle http GET", async function() {
+            await needle("get", `http://${TEST_HOST}${TEST_PATH}`);
+
+            assertMetrics(this.metrics);
+        });
+
+        it("needle https GET", async function() {
+            await needle("get", `https://${TEST_HOST}${TEST_PATH}`);
+
+            assertMetrics(this.metrics, { protocol: "https" });
         });
     });
 
