@@ -21,6 +21,7 @@
 "use strict";
 
 const instrumentHttpClient = require("../../lib/probe/http-client");
+const sendQueue = require("../../lib/queue");
 
 const assert = require("assert");
 const nock = require("nock");
@@ -399,6 +400,25 @@ describe("probe http-client", function() {
                 errorMessage: "Connection timed out",
                 errorCode: 110
             });
+        });
+    });
+
+    describe("misc", function() {
+        it("should ignore our own newrelic requests", async function() {
+            nock("https://insights-collector.newrelic.com")
+                .post("/v1/accounts/123456/events")
+                .reply(200, {});
+
+            const response = await fetch("https://insights-collector.newrelic.com/v1/accounts/123456/events", {
+                method: "POST",
+                headers: {
+                    "User-Agent": sendQueue.USER_AGENT,
+                    "X-Insert-Key": "1234567"
+                }
+            });
+            await response.json();
+
+            assert.equal(this.metrics, undefined);
         });
     });
 });
