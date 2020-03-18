@@ -31,8 +31,7 @@ const EVENT_TYPE = "myevent";
 
 const FAKE_PARAMS = Object.freeze({
     newRelicEventsURL: MetricsTestHelper.MOCK_URL,
-    newRelicApiKey: MetricsTestHelper.MOCK_API_KEY,
-    sendIntervalMs: 10
+    newRelicApiKey: MetricsTestHelper.MOCK_API_KEY
 });
 
 const EXPECTED_METRICS = Object.freeze({
@@ -50,6 +49,8 @@ describe("NewRelic", function() {
         process.env.__OW_NAMESPACE = "namespace";
         process.env.__OW_ACTIVATION_ID = "activationId";
         process.env.__OW_DEADLINE = Date.now() + 60000;
+
+        MetricsTestHelper.beforeEachTest();
 
         // wrap all tests with the required instrumentation
         this.currentTest.fn = NewRelic.instrument(this.currentTest.fn);
