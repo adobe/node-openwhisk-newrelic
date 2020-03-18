@@ -22,7 +22,8 @@ Reference: <https://docs.newrelic.com/docs/insights/insights-data-sources/custom
 ## Usage
 
 Initialize the New Relic Metrics agent. This will start a `setTimeout` that will send metrics if your action is close to timeout using `__OW_DEADLINE`
-```
+
+```javascript
 const NewRelic = require('@nui/openwhisk-newrelic');
 const metrics = new NewRelic({
     newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
@@ -31,7 +32,8 @@ const metrics = new NewRelic({
 ```
 
 Collect all your custom/background metrics in a separate object
-```
+
+```javascript
 const customMetrics = {
     data: "value",
     userName: "sampleUser"
@@ -39,12 +41,41 @@ const customMetrics = {
 ```
 
 Send your metrics to New Relic
-```
+
+```javascript
 await metrics.send('EVENT_TYPE', customMetrics);
 ```
+
+Note that metrics are not sent immediately but are collected in the background and sent in intervals every 10 seconds by default. This can be configured via `sendIntervalMs` in the options of the constructor (in milliseconds).
+
 You MUST call `activationFinished()` to stop the agent when you are done sending metrics, or when your action is finishing. This will clear the action timeout that began when the class instance was defined.
-```
+
+```javascript
 metrics.activationFinished();
+```
+
+### Instrumentation
+
+Supported instrumentation:
+
+* outgoing http requests (via the node `http` and `https` modules)
+
+To enable instrumentation, wrap the action main function in `NewRelic.instrument()`. A complete example might look like this:
+
+```javascript
+async function main(params) {
+    const metrics = new NewRelic({
+        newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
+        newRelicApiKey: 'YOUR_API_KEY',
+    });
+    try {
+        // do something
+    } finally {
+        await metrics.activationFinished();
+    }
+}
+
+exports.main = NewRelic.instrument(main);
 ```
 
 ### Action Timeout
@@ -54,21 +85,27 @@ The default behavior of the agent is it will begin a `setTimeout` that will send
 In case you want to opt out of the action timeout, (example: unit tests) there are two ways to opt out:
 
 1. Pass in `disableActionTimeout` to options:
-```
-const metrics = new NewRelic({
-    newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
-    newRelicApiKey: 'YOUR_API_KEY',
-    disableActionTimeout: true
-});
-```
+
+   ```javascript
+   const metrics = new NewRelic({
+       newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
+       newRelicApiKey: 'YOUR_API_KEY',
+       disableActionTimeout: true
+   });
+   ```
+
 2. Set the environment variable: `DISABLE_ACTION_TIMEOUT_METRIC` to `true`:
-`export DISABLE_ACTION_TIMEOUT_METRIC = true`
+   
+   ```
+   export DISABLE_ACTION_TIMEOUT_METRIC = true
+   ```
 
 If either of these are set to true, there will be no action timeout and calling `activationFinished` is no longer necessary.
 
 
 In case you want to pass custom metrics to the action timeout, you can define a callback function in New Relic options. The result of the callback will be added to the default metrics and sent at action timeout. If you do not define an `eventType`, it will default to `timeout`.:
-```
+
+```javascript
 const metrics = new NewRelic({
     newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
     newRelicApiKey: 'YOUR_API_KEY',
