@@ -19,11 +19,9 @@
 
 const NewRelic = require('./lib/newrelic');
 const Metrics = require('./lib/metrics');
-const MetricsTestHelper = require('./lib/testhelper');
 
 
 module.exports = {
     Metrics,
-    NewRelic,
-    MetricsTestHelper
+    NewRelic
 }
