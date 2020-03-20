@@ -24,7 +24,7 @@
     "fs-extra": "^8.1.0",
     "mocha": "^7.0.0",
     "needle": "^2.3.3",
-    "nock": "^11.7.2",
+    "nock": "^12.0.3",
     "nyc": "^15.0.0",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.8"
