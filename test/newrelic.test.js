@@ -45,8 +45,6 @@ const EXPECTED_METRICS = Object.freeze({
 describe("NewRelic", function() {
 
     beforeEach(function() {
-        nock.cleanAll();
-
         process.env.__OW_ACTION_NAME = "/namespace/package/action";
         process.env.__OW_NAMESPACE = "namespace";
         process.env.__OW_ACTIVATION_ID = "activationId";
@@ -189,7 +187,7 @@ describe("NewRelic", function() {
         });
 
         it("sendMetrics - fail with 500 but not throw error", async function() {
-            nock(MetricsTestHelper.MOCK_BASE_URL)
+            const failedMetricsNock = nock(MetricsTestHelper.MOCK_BASE_URL)
                 .post(MetricsTestHelper.MOCK_URL_PATH)
                 .reply(500)
 
@@ -197,11 +195,12 @@ describe("NewRelic", function() {
             await metrics.send(EVENT_TYPE, { test: "value" });
             await metrics.activationFinished();
 
-            await MetricsTestHelper.metricsDone();
+            await sleep(100);
+            failedMetricsNock.done();
         });
 
         it("sendMetrics - request throws error but it is handled", async function() {
-            nock(MetricsTestHelper.MOCK_BASE_URL)
+            const failedMetricsNock = nock(MetricsTestHelper.MOCK_BASE_URL)
                 .post(MetricsTestHelper.MOCK_URL_PATH)
                 .replyWithError("faked error");
 
@@ -211,7 +210,8 @@ describe("NewRelic", function() {
             await metrics.send(EVENT_TYPE, { test: "value" });
             await metrics.activationFinished();
 
-            await MetricsTestHelper.metricsDone();
+            await sleep(100);
+            failedMetricsNock.done();
         });
 
         it("sendMetrics - for concurrent activations", async function() {
