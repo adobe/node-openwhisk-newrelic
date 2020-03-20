@@ -2,7 +2,7 @@
 * ADOBE CONFIDENTIAL
 * ___________________
 *
-* Copyright 2019 Adobe
+* Copyright 2020 Adobe
 * All Rights Reserved.
 *
 * NOTICE: All information contained herein is, and remains
@@ -21,6 +21,7 @@
 "use strict";
 
 const instrumentHttpClient = require("../../lib/probe/http-client");
+const sendQueue = require("../../lib/queue");
 
 const assert = require("assert");
 const nock = require("nock");
@@ -32,6 +33,7 @@ const request = require("request-promise-native");
 const axios = require('axios');
 const http = require('http');
 const https = require('https');
+const needle = require('needle');
 
 
 const TEST_HOST = "subdomain.example.com";
@@ -115,6 +117,7 @@ describe("probe http-client", function() {
         nock(`http://${TEST_HOST}`).post(TEST_PATH).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
 
         delete this.metrics;
+        instrumentHttpClient.stop();
         instrumentHttpClient.start((metrics) => {
             this.metrics = metrics;
         });
@@ -398,6 +401,40 @@ describe("probe http-client", function() {
                 errorMessage: "Connection timed out",
                 errorCode: 110
             });
+        });
+    });
+
+    // used by npm openwhisk library (action invocations)
+    describe("needle", function() {
+        it("needle http GET", async function() {
+            await needle("get", `http://${TEST_HOST}${TEST_PATH}`);
+
+            assertMetrics(this.metrics);
+        });
+
+        it("needle https GET", async function() {
+            await needle("get", `https://${TEST_HOST}${TEST_PATH}`);
+
+            assertMetrics(this.metrics, { protocol: "https" });
+        });
+    });
+
+    describe("misc", function() {
+        it("should ignore our own newrelic requests", async function() {
+            nock("https://insights-collector.newrelic.com")
+                .post("/v1/accounts/123456/events")
+                .reply(200, {});
+
+            const response = await fetch("https://insights-collector.newrelic.com/v1/accounts/123456/events", {
+                method: "POST",
+                headers: {
+                    "User-Agent": sendQueue.USER_AGENT,
+                    "X-Insert-Key": "1234567"
+                }
+            });
+            await response.json();
+
+            assert.equal(this.metrics, undefined);
         });
     });
 });

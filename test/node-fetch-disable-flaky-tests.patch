@@ -1,0 +1,13 @@
+diff --git a/test/main.js b/test/main.js
+index 4f6134b..6475f40 100644
+--- a/test/main.js
++++ b/test/main.js
+@@ -850,7 +850,7 @@ describe('node-fetch', () => {
+ 			.and.have.property('type', 'request-timeout');
+ 	});
+ 
+-	it('should allow custom timeout on response body', () => {
++	it.skip('should allow custom timeout on response body', () => {
+ 		const url = `${base}slow`;
+ 		const options = {
+ 			timeout: 20

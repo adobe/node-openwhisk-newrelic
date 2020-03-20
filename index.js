@@ -20,6 +20,7 @@
 const NewRelic = require('./lib/newrelic');
 const Metrics = require('./lib/metrics');
 
+
 module.exports = {
     Metrics,
     NewRelic
