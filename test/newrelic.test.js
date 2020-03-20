@@ -45,6 +45,8 @@ const EXPECTED_METRICS = Object.freeze({
 describe("NewRelic", function() {
 
     beforeEach(function() {
+        nock.cleanAll();
+
         process.env.__OW_ACTION_NAME = "/namespace/package/action";
         process.env.__OW_NAMESPACE = "namespace";
         process.env.__OW_ACTIVATION_ID = "activationId";
