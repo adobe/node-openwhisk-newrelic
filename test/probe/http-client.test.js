@@ -30,6 +30,7 @@ const { promisify } = require('util');
 const sleep = promisify(setTimeout);
 const url = require('url');
 const pem = require('pem').promisified;
+const { Readable } = require('stream');
 
 const fetch = require("node-fetch");
 const request = require("request-promise-native");
@@ -49,6 +50,14 @@ const TEST_DOMAIN_NOCK = "example.com";
 
 const TEST_REQUEST_ID = "test-request-id";
 
+function readableFromBuffer(buffer) {
+    const readable = new Readable();
+    readable._read = () => {}; // _read is required but you can noop it
+    readable.push(buffer);
+    readable.push(null);
+    return readable;
+}
+
 function doAssertMetrics(metrics, opts) {
     opts = opts || {};
     const host = opts.host || TEST_HOST;
@@ -57,8 +66,6 @@ function doAssertMetrics(metrics, opts) {
                      || (port === 443 && opts.protocol === "https")) ? "" : `:${port}`;
     const path = opts.path;
     const url = `${opts.protocol || "http"}://${host}${urlPort}${path}`;
-
-    console.log("http metrics:", metrics);
 
     assert(typeof metrics === "object");
     assert.strictEqual(metrics.host, host);
@@ -121,8 +128,6 @@ function assertMetricsNock(metrics, opts) {
 function assertErrorMetricsNock(metrics, opts) {
     opts = opts || {};
     opts.port = opts.port || (opts.protocol === "https" ? 443: 80);
-
-    console.log("error metrics:", metrics);
 
     assert(typeof metrics === "object");
     assert.strictEqual(metrics.host, TEST_HOST_NOCK);
@@ -421,32 +426,23 @@ describe("probe http-client", function() {
             assert.strictEqual(this.metrics.requestBodySize, requestBody.length);
         });
 
-        // TODO: fix fetch http stream - not measuring request size: try read request content-length
-        it.skip("fetch http stream PUT", async function() {
+        it("fetch http stream PUT", async function() {
             const TEST_PUT_PATH = "/put";
             mockServer("PUT", TEST_PUT_PATH);
 
-            const { Readable } = require('stream');
-
-            function readableFromBuffer(buffer) {
-                const readable = new Readable();
-                readable._read = () => {}; // _read is required but you can noop it
-                readable.push(buffer);
-                readable.push(null);
-            }
-
             const UPLOAD_SIZE = 1000000;
-            const requestBody = readableFromBuffer(Buffer.alloc(UPLOAD_SIZE, "x"));
 
             const response = await fetch(`http://${getHost()}${TEST_PUT_PATH}`, {
                 method: "PUT",
-                body: requestBody
+                body: readableFromBuffer(Buffer.alloc(UPLOAD_SIZE, "x"))
             });
             await assertFetchResponse(response);
 
             assertMetrics(this.metrics, {
                 method: "PUT",
-                path: TEST_PUT_PATH
+                path: TEST_PUT_PATH,
+                // TODO: no request finish event with streaming?
+                ignoreDurationSend: true
             });
             assert.strictEqual(this.metrics.requestBodySize, UPLOAD_SIZE);
         });
@@ -556,11 +552,10 @@ describe("probe http-client", function() {
 
     describe("node http", function() {
 
-        function httpRequest(http, options, opts) {
+        function httpRequest(http, url, options) {
             return new Promise((resolve, reject) => {
-                const req = http.request(options, (res) => {
-
-                    if (opts && opts.noResponseListener) {
+                const req = http.request(url, options, (res) => {
+                    if (options && options.noResponseListener) {
                         resolve();
                     } else {
                         let responseBody = '';
@@ -589,10 +584,16 @@ describe("probe http-client", function() {
                 req.setTimeout(1000, () => {
                 });
 
-                if (opts && opts.data) {
-                    req.write(opts.data);
+                if (options && options.body) {
+                    if (options.body instanceof Readable) {
+                        options.body.pipe(req);
+                    } else {
+                        req.write(options.body);
+                        req.end();
+                    }
+                } else {
+                    req.end();
                 }
-                req.end();
             });
         }
 
@@ -667,6 +668,26 @@ describe("probe http-client", function() {
             assertMetrics(this.metrics, {
                 path: TEST_PATH
             });
+        });
+
+        it("node http stream PUT", async function() {
+            const TEST_PUT_PATH = "/put";
+            mockServer("PUT", TEST_PUT_PATH);
+
+            const UPLOAD_SIZE = 1000000;
+
+            await httpRequest(http, `http://${getHost()}${TEST_PUT_PATH}`, {
+                method: "PUT",
+                body: readableFromBuffer(Buffer.alloc(UPLOAD_SIZE, "x"))
+            });
+
+            assertMetrics(this.metrics, {
+                method: "PUT",
+                path: TEST_PUT_PATH,
+                // TODO: no request finish event with streaming?
+                ignoreDurationSend: true
+            });
+            assert.strictEqual(this.metrics.requestBodySize, UPLOAD_SIZE);
         });
     });
 
