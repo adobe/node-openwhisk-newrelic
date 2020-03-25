@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "cls-hooked": "^4.2.2",
+    "debug": "^4.1.1",
     "node-fetch": "^2.6.0"
   },
   "devDependencies": {
