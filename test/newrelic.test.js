@@ -525,7 +525,7 @@ describe("NewRelic", function() {
             }
             await Promise.all(activations);
 
-            await MetricsTestHelper.metricsDone(500);
+            await MetricsTestHelper.metricsDone(700);
 
             assert.equal(receivedMetrics.length, ACTIVATION_COUNT * 4);
             receivedMetrics.forEach(m => {
