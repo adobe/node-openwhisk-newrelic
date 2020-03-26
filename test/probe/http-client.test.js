@@ -354,7 +354,6 @@ describe("probe http-client", function() {
         });
 
         it("node http PUT", async function() {
-            // TODO: node http PUT (no stream)
             const TEST_PUT_PATH = "/put";
             mockServer("PUT", TEST_PUT_PATH);
 
