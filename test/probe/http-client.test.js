@@ -83,34 +83,32 @@ function doAssertMetrics(metrics, opts) {
     if (!opts.ignoreServerRequestId) {
         assert.strictEqual(metrics.serverRequestId, TEST_REQUEST_ID);
     }
-    assert.ok(Number.isFinite(metrics.duration));
-    assert.ok(metrics.duration >= 0);
-    assert.ok(Number.isFinite(metrics.durationBlocked));
-    assert.ok(metrics.durationBlocked >= 0);
-    assert.ok(Number.isFinite(metrics.durationBlocked));
-    assert.ok(metrics.durationBlocked >= 0);
-    if (!opts.ignoreDNSLookup) {
-        // for nock tests which don't do any DNS resolution and its always undefined
+
+    if (!opts.ignoreDurations) {
+        assert.ok(Number.isFinite(metrics.duration));
+        assert.ok(metrics.duration >= 0);
+        assert.ok(Number.isFinite(metrics.durationBlocked));
+        assert.ok(metrics.durationBlocked >= 0);
+        assert.ok(Number.isFinite(metrics.durationBlocked));
+        assert.ok(metrics.durationBlocked >= 0);
         assert.ok(Number.isFinite(metrics.durationDNS));
         assert.ok(metrics.durationDNS >= 0);
+        assert.ok(Number.isFinite(metrics.durationConnect));
+        assert.ok(metrics.durationConnect >= 0);
+        if (opts.protocol === "https") {
+            assert.ok(Number.isFinite(metrics.durationSSL));
+            assert.ok(metrics.durationSSL >= 0);
+        }
+        if (!opts.ignoreDurationSend) {
+            assert.ok(Number.isFinite(metrics.durationSend));
+            assert.ok(metrics.durationSend >= 0);
+        }
+        assert.ok(Number.isFinite(metrics.durationWait));
+        assert.ok(metrics.durationWait >= 0);
+        assert.ok(Number.isFinite(metrics.durationReceive));
+        assert.ok(metrics.durationReceive >= 0);
+        assert.ok(metrics.duration >= metrics.durationReceive);
     }
-    assert.ok(Number.isFinite(metrics.durationConnect));
-    assert.ok(metrics.durationConnect >= 0);
-    if (opts.protocol === "https") {
-        assert.ok(Number.isFinite(metrics.durationSSL));
-        assert.ok(metrics.durationSSL >= 0);
-    }
-    if (!opts.ignoreDurationSend) {
-        // for nock tests where the order of some events is wrong so durationSend is always incorrect
-        assert.ok(Number.isFinite(metrics.durationSend));
-        assert.ok(metrics.durationSend >= 0);
-    }
-
-    assert.ok(Number.isFinite(metrics.durationWait));
-    assert.ok(metrics.durationWait >= 0);
-    assert.ok(Number.isFinite(metrics.durationReceive));
-    assert.ok(metrics.durationReceive >= 0);
-    assert.ok(metrics.duration >= metrics.durationReceive);
 }
 
 function assertMetricsNock(metrics, opts) {
@@ -119,8 +117,9 @@ function assertMetricsNock(metrics, opts) {
         Object.assign({
             host: TEST_HOST_NOCK,
             domain: TEST_DOMAIN_NOCK,
-            ignoreDNSLookup: true,
-            ignoreDurationSend: true
+            // nock messes with requests and prevents certain things
+            // (no DNS resolution, wrong order of events)
+            ignoreDurations: true
         }, opts)
     );
 }
@@ -430,7 +429,7 @@ describe("probe http-client", function() {
             const TEST_PUT_PATH = "/put";
             mockServer("PUT", TEST_PUT_PATH);
 
-            const UPLOAD_SIZE = 1000000;
+            const UPLOAD_SIZE = 10000000;
 
             const response = await fetch(`http://${getHost()}${TEST_PUT_PATH}`, {
                 method: "PUT",
@@ -441,7 +440,7 @@ describe("probe http-client", function() {
             assertMetrics(this.metrics, {
                 method: "PUT",
                 path: TEST_PUT_PATH,
-                // TODO: no request finish event with streaming?
+                // streams make it impossible to measure request send time
                 ignoreDurationSend: true
             });
             assert.strictEqual(this.metrics.requestBodySize, UPLOAD_SIZE);
@@ -684,7 +683,7 @@ describe("probe http-client", function() {
             assertMetrics(this.metrics, {
                 method: "PUT",
                 path: TEST_PUT_PATH,
-                // TODO: no request finish event with streaming?
+                // streams make it impossible to measure request send time
                 ignoreDurationSend: true
             });
             assert.strictEqual(this.metrics.requestBodySize, UPLOAD_SIZE);
