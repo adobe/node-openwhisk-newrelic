@@ -30,13 +30,18 @@ const { promisify } = require('util');
 const sleep = promisify(setTimeout);
 const url = require('url');
 const pem = require('pem').promisified;
+const { Readable } = require('stream');
+const fs = require('fs').promises;
+const mockFs = require('mock-fs');
 
+// http frameworks tested
 const fetch = require("node-fetch");
 const request = require("request-promise-native");
 const axios = require('axios');
 const http = require('http');
 const https = require('https');
 const needle = require('needle');
+const { downloadFile, uploadFile } = require('@nui/node-httptransfer');
 
 // for tests using mock-http-server which is a real local webserver
 // that  can only run on "localhost"
@@ -49,6 +54,21 @@ const TEST_DOMAIN_NOCK = "example.com";
 
 const TEST_REQUEST_ID = "test-request-id";
 
+// mock-http-server only allows a max of 100kb
+// (it uses body-parser with its default limit)
+const MAX_UPLOAD_SIZE = 100*1024;
+const BIG_CONTENT = Buffer.alloc(MAX_UPLOAD_SIZE, "x");
+
+const NODE_MAJOR_VERSION = process.versions.node.split('.')[0];
+
+function readableFromBuffer(buffer) {
+    const readable = new Readable();
+    readable._read = () => {}; // _read is required but you can noop it
+    readable.push(buffer);
+    readable.push(null);
+    return readable;
+}
+
 function doAssertMetrics(metrics, opts) {
     opts = opts || {};
     const host = opts.host || TEST_HOST;
@@ -57,8 +77,6 @@ function doAssertMetrics(metrics, opts) {
                      || (port === 443 && opts.protocol === "https")) ? "" : `:${port}`;
     const path = opts.path;
     const url = `${opts.protocol || "http"}://${host}${urlPort}${path}`;
-
-    console.log("http metrics:", metrics);
 
     assert(typeof metrics === "object");
     assert.strictEqual(metrics.host, host);
@@ -72,38 +90,44 @@ function doAssertMetrics(metrics, opts) {
     if (!opts.ignoreServerIPAddress) {
         assert.strictEqual(metrics.serverIPAddress, "127.0.0.1");
     }
+    if (opts.requestBodySize !== undefined) {
+        assert.strictEqual(metrics.requestBodySize, opts.requestBodySize);
+    }
     assert.strictEqual(metrics.responseBodySize, opts.responseBodySize || 11);
     if (!opts.ignoreServerRequestId) {
         assert.strictEqual(metrics.serverRequestId, TEST_REQUEST_ID);
     }
-    assert.ok(Number.isFinite(metrics.duration));
-    assert.ok(metrics.duration >= 0);
-    assert.ok(Number.isFinite(metrics.durationBlocked));
-    assert.ok(metrics.durationBlocked >= 0);
-    assert.ok(Number.isFinite(metrics.durationBlocked));
-    assert.ok(metrics.durationBlocked >= 0);
-    if (!opts.ignoreDNSLookup) {
-        // for nock tests which don't do any DNS resolution and its always undefined
+
+    if (!opts.ignoreDurations) {
+        assert.ok(Number.isFinite(metrics.duration));
+        assert.ok(metrics.duration >= 0);
+        assert.ok(Number.isFinite(metrics.durationBlocked));
+        assert.ok(metrics.durationBlocked >= 0);
+        assert.ok(Number.isFinite(metrics.durationBlocked));
+        assert.ok(metrics.durationBlocked >= 0);
         assert.ok(Number.isFinite(metrics.durationDNS));
         assert.ok(metrics.durationDNS >= 0);
+        assert.ok(Number.isFinite(metrics.durationConnect));
+        assert.ok(metrics.durationConnect >= 0);
+        if (opts.protocol === "https") {
+            assert.ok(Number.isFinite(metrics.durationSSL));
+            assert.ok(metrics.durationSSL >= 0);
+        }
+        if (opts.ensureDurationSendNotNegative) {
+            // allow it to be undefined (not measurable) or a positive number
+            if (metrics.durationSend !== undefined) {
+                assert.ok(metrics.durationSend >= 0);
+            }
+        } else {
+            assert.ok(Number.isFinite(metrics.durationSend));
+            assert.ok(metrics.durationSend >= 0);
+        }
+        assert.ok(Number.isFinite(metrics.durationWait));
+        assert.ok(metrics.durationWait >= 0);
+        assert.ok(Number.isFinite(metrics.durationReceive));
+        assert.ok(metrics.durationReceive >= 0);
+        assert.ok(metrics.duration >= metrics.durationReceive);
     }
-    assert.ok(Number.isFinite(metrics.durationConnect));
-    assert.ok(metrics.durationConnect >= 0);
-    if (opts.protocol === "https") {
-        assert.ok(Number.isFinite(metrics.durationSSL));
-        assert.ok(metrics.durationSSL >= 0);
-    }
-    if (!opts.ignoreDurationSend) {
-        // for nock tests where the order of some events is wrong so durationSend is always incorrect
-        assert.ok(Number.isFinite(metrics.durationSend));
-        assert.ok(metrics.durationSend >= 0);
-    }
-
-    assert.ok(Number.isFinite(metrics.durationWait));
-    assert.ok(metrics.durationWait >= 0);
-    assert.ok(Number.isFinite(metrics.durationReceive));
-    assert.ok(metrics.durationReceive >= 0);
-    assert.ok(metrics.duration >= metrics.durationReceive);
 }
 
 function assertMetricsNock(metrics, opts) {
@@ -112,8 +136,9 @@ function assertMetricsNock(metrics, opts) {
         Object.assign({
             host: TEST_HOST_NOCK,
             domain: TEST_DOMAIN_NOCK,
-            ignoreDNSLookup: true,
-            ignoreDurationSend: true
+            // nock messes with requests and prevents certain things
+            // (no DNS resolution, wrong order of events)
+            ignoreDurations: true
         }, opts)
     );
 }
@@ -121,8 +146,6 @@ function assertMetricsNock(metrics, opts) {
 function assertErrorMetricsNock(metrics, opts) {
     opts = opts || {};
     opts.port = opts.port || (opts.protocol === "https" ? 443: 80);
-
-    console.log("error metrics:", metrics);
 
     assert(typeof metrics === "object");
     assert.strictEqual(metrics.host, TEST_HOST_NOCK);
@@ -190,19 +213,201 @@ describe("probe http-client", function() {
         instrumentHttpClient.stop();
 
         server.stop(done);
+
+        mockFs.restore();
     });
 
-    function mockServer(method, path) {
+    function mockServer(method, path, responseBody) {
+        responseBody = responseBody || JSON.stringify({ok: true});
         server.on({
             method: method,
             path: path,
             reply: {
-                status:  200,
-                headers: {"x-request-id": TEST_REQUEST_ID},
-                body:    JSON.stringify({ok: true})
+                status: 200,
+                headers: {
+                    "x-request-id": TEST_REQUEST_ID,
+                    "content-length": responseBody.length
+                },
+                body: responseBody
             }
         });
     }
+
+    describe("node http", function() {
+
+        function httpRequest(http, url, options) {
+            return new Promise((resolve, reject) => {
+                const req = http.request(url, options, (res) => {
+                    if (options && options.noResponseListener) {
+                        resolve();
+                    } else {
+                        let responseBody = '';
+
+                        res.setEncoding('utf8');
+                        res.on('data', (chunk) => {
+                            responseBody += chunk;
+                        });
+
+                        res.on('end', () => {
+                            let body = {};
+                            try {
+                                body = JSON.parse(responseBody);
+                            } catch(e) {
+                                console.log("Ignoring error:", e);
+                            }
+                            resolve(body);
+                        });
+                    }
+                });
+
+                req.on('error', (err) => {
+                    reject(err);
+                });
+
+                req.setTimeout(1000, () => {
+                });
+
+                if (options && options.body) {
+                    if (options.body instanceof Readable) {
+                        options.body.pipe(req);
+                    } else {
+                        req.write(options.body);
+                        req.end();
+                    }
+                } else {
+                    req.end();
+                }
+            });
+        }
+
+        it("node http GET", async function() {
+            const TEST_PATH = "/test";
+            mockServer("GET", TEST_PATH);
+
+            await httpRequest(http, `http://${getHost()}${TEST_PATH}`);
+
+            assertMetrics(this.metrics, {
+                path: TEST_PATH
+            });
+        });
+
+        it("node http GET with URL", async function() {
+            const TEST_PATH = "/test";
+            mockServer("GET", TEST_PATH);
+
+            await httpRequest(http, new URL(`http://${getHost()}${TEST_PATH}`));
+
+            assertMetrics(this.metrics, {
+                path: TEST_PATH
+            });
+        });
+
+        // TODO: fix missing metrics if response is not read
+        it.skip("node http GET without reading response", async function() {
+            const TEST_PATH = "/test";
+            mockServer("GET", TEST_PATH);
+
+            await httpRequest(http, `http://${getHost()}${TEST_PATH}`, {noResponseListener: true});
+
+            // wait for next ticks
+            await sleep(10);
+
+            assertMetrics(this.metrics, {
+                path: TEST_PATH
+            });
+        });
+
+        it("node https GET", async function() {
+            const TEST_PATH = "/test";
+            mockServer("GET", TEST_PATH);
+
+            await httpRequest(https, `https://${getHttpsHost()}${TEST_PATH}`);
+
+            assertMetrics(this.metrics, {
+                protocol: "https",
+                path: TEST_PATH
+            });
+        });
+
+        it("node http timeout", async function() {
+            const FAIL_TIMEOUT_PATH = "/timeout";
+            nock(`http://${TEST_HOST_NOCK}`).get(FAIL_TIMEOUT_PATH).socketDelay(2000).reply(200);
+
+            await httpRequest(http, `http://${TEST_HOST_NOCK}${FAIL_TIMEOUT_PATH}`);
+
+            assertErrorMetricsNock(this.metrics, {
+                path: FAIL_TIMEOUT_PATH,
+                errorMessage: "Connection timed out",
+                errorCode: 110
+            });
+        });
+
+        it("node http GET with username and password", async function() {
+            const TEST_PATH = "/test";
+            mockServer("GET", TEST_PATH);
+
+            await httpRequest(http, `http://user:pwd@${getHost()}${TEST_PATH}`);
+
+            assertMetrics(this.metrics, {
+                path: TEST_PATH
+            });
+        });
+
+        it("node http PUT", async function() {
+            const TEST_PUT_PATH = "/put";
+            mockServer("PUT", TEST_PUT_PATH);
+
+            await httpRequest(http, `http://${getHost()}${TEST_PUT_PATH}`, {
+                method: "PUT",
+                body: BIG_CONTENT
+            });
+
+            assertMetrics(this.metrics, {
+                method: "PUT",
+                path: TEST_PUT_PATH,
+                requestBodySize: BIG_CONTENT.length
+            });
+        });
+
+        it("node http PUT stream", async function() {
+            const TEST_PUT_PATH = "/put";
+            mockServer("PUT", TEST_PUT_PATH);
+
+            await httpRequest(http, `http://${getHost()}${TEST_PUT_PATH}`, {
+                method: "PUT",
+                body: readableFromBuffer(BIG_CONTENT)
+            });
+
+            assertMetrics(this.metrics, {
+                method: "PUT",
+                path: TEST_PUT_PATH,
+                requestBodySize: BIG_CONTENT.length
+            });
+        });
+
+        it(`node http PUT stream w/ content-length (${NODE_MAJOR_VERSION < 12 ? "lenient due to Node < 12" : "stricter due to Node >= 12"})`, async function() {
+            const TEST_PUT_PATH = "/put";
+            mockServer("PUT", TEST_PUT_PATH);
+
+            await httpRequest(http, `http://${getHost()}${TEST_PUT_PATH}`, {
+                method: "PUT",
+                headers: {
+                    // this is key... see comment below
+                    "content-length": BIG_CONTENT.length
+                },
+                body: readableFromBuffer(BIG_CONTENT)
+            });
+
+            assertMetrics(this.metrics, {
+                method: "PUT",
+                path: TEST_PUT_PATH,
+                // older versions of node apparently have a bug where the request finish event
+                // happens before socket connect if streaming is used plus content-length header
+                ensureDurationSendNotNegative: NODE_MAJOR_VERSION < 12,
+                requestBodySize: BIG_CONTENT.length
+            });
+        });
+    });
 
     describe("fetch", function() {
 
@@ -389,66 +594,53 @@ describe("probe http-client", function() {
             const TEST_PATH = "/post";
             mockServer("POST", TEST_PATH);
 
+            const TEST_CONTENT = "some text";
+
             const response = await fetch(`http://${getHost()}${TEST_PATH}`, {
                 method: "POST",
-                body: "some text"
+                body: TEST_CONTENT
             });
             await assertFetchResponse(response);
 
             assertMetrics(this.metrics, {
                 method: "POST",
-                path: TEST_PATH
+                path: TEST_PATH,
+                requestBodySize: TEST_CONTENT.length
             });
-            assert.strictEqual(this.metrics.requestBodySize, "some text".length);
         });
 
         it("fetch http PUT", async function() {
             const TEST_PUT_PATH = "/put";
             mockServer("PUT", TEST_PUT_PATH);
 
-            const requestBody = new Array(100000).join("x");
-
             const response = await fetch(`http://${getHost()}${TEST_PUT_PATH}`, {
                 method: "PUT",
-                body: requestBody
+                body: BIG_CONTENT.toString()
             });
             await assertFetchResponse(response);
 
             assertMetrics(this.metrics, {
                 method: "PUT",
-                path: TEST_PUT_PATH
+                path: TEST_PUT_PATH,
+                requestBodySize: BIG_CONTENT.length
             });
-            assert.strictEqual(this.metrics.requestBodySize, requestBody.length);
         });
 
-        // TODO: fix fetch http stream - not measuring request size: try read request content-length
-        it.skip("fetch http stream PUT", async function() {
+        it("fetch http PUT stream", async function() {
             const TEST_PUT_PATH = "/put";
             mockServer("PUT", TEST_PUT_PATH);
 
-            const { Readable } = require('stream');
-
-            function readableFromBuffer(buffer) {
-                const readable = new Readable();
-                readable._read = () => {}; // _read is required but you can noop it
-                readable.push(buffer);
-                readable.push(null);
-            }
-
-            const UPLOAD_SIZE = 1000000;
-            const requestBody = readableFromBuffer(Buffer.alloc(UPLOAD_SIZE, "x"));
-
             const response = await fetch(`http://${getHost()}${TEST_PUT_PATH}`, {
                 method: "PUT",
-                body: requestBody
+                body: readableFromBuffer(BIG_CONTENT)
             });
             await assertFetchResponse(response);
 
             assertMetrics(this.metrics, {
                 method: "PUT",
-                path: TEST_PUT_PATH
+                path: TEST_PUT_PATH,
+                requestBodySize: BIG_CONTENT.length
             });
-            assert.strictEqual(this.metrics.requestBodySize, UPLOAD_SIZE);
         });
 
         it("fetch http delay", async function() {
@@ -498,9 +690,9 @@ describe("probe http-client", function() {
                 url: "https://httpbin.org/anything",
                 ignoreServerIPAddress: true,
                 responseBodySize: 5000510,
-                ignoreServerRequestId: true
+                ignoreServerRequestId: true,
+                requestBodySize: requestBody.length
             });
-            assert.strictEqual(this.metrics.requestBodySize, requestBody.length);
         });
     });
 
@@ -554,122 +746,6 @@ describe("probe http-client", function() {
         });
     });
 
-    describe("node http", function() {
-
-        function httpRequest(http, options, opts) {
-            return new Promise((resolve, reject) => {
-                const req = http.request(options, (res) => {
-
-                    if (opts && opts.noResponseListener) {
-                        resolve();
-                    } else {
-                        let responseBody = '';
-
-                        res.setEncoding('utf8');
-                        res.on('data', (chunk) => {
-                            responseBody += chunk;
-                        });
-
-                        res.on('end', () => {
-                            let body = {};
-                            try {
-                                body = JSON.parse(responseBody);
-                            } catch(e) {
-                                console.log("Ignoring error:", e);
-                            }
-                            resolve(body);
-                        });
-                    }
-                });
-
-                req.on('error', (err) => {
-                    reject(err);
-                });
-
-                req.setTimeout(1000, () => {
-                });
-
-                if (opts && opts.data) {
-                    req.write(opts.data);
-                }
-                req.end();
-            });
-        }
-
-        it("node http GET", async function() {
-            const TEST_PATH = "/test";
-            mockServer("GET", TEST_PATH);
-
-            await httpRequest(http, `http://${getHost()}${TEST_PATH}`);
-
-            assertMetrics(this.metrics, {
-                path: TEST_PATH
-            });
-        });
-
-        it("node http GET with URL", async function() {
-            const TEST_PATH = "/test";
-            mockServer("GET", TEST_PATH);
-
-            await httpRequest(http, new URL(`http://${getHost()}${TEST_PATH}`));
-
-            assertMetrics(this.metrics, {
-                path: TEST_PATH
-            });
-        });
-
-        // TODO: fix missing metrics if response is not read
-        it.skip("node http GET without reading response", async function() {
-            const TEST_PATH = "/test";
-            mockServer("GET", TEST_PATH);
-
-            await httpRequest(http, `http://${getHost()}${TEST_PATH}`, {noResponseListener: true});
-
-            // wait for next ticks
-            await sleep(10);
-
-            assertMetrics(this.metrics, {
-                path: TEST_PATH
-            });
-        });
-
-        it("node https GET", async function() {
-            const TEST_PATH = "/test";
-            mockServer("GET", TEST_PATH);
-
-            await httpRequest(https, `https://${getHttpsHost()}${TEST_PATH}`);
-
-            assertMetrics(this.metrics, {
-                protocol: "https",
-                path: TEST_PATH
-            });
-        });
-
-        it("node http timeout", async function() {
-            const FAIL_TIMEOUT_PATH = "/timeout";
-            nock(`http://${TEST_HOST_NOCK}`).get(FAIL_TIMEOUT_PATH).socketDelay(2000).reply(200);
-
-            await httpRequest(http, `http://${TEST_HOST_NOCK}${FAIL_TIMEOUT_PATH}`);
-
-            assertErrorMetricsNock(this.metrics, {
-                path: FAIL_TIMEOUT_PATH,
-                errorMessage: "Connection timed out",
-                errorCode: 110
-            });
-        });
-
-        it("node http GET with username and password", async function() {
-            const TEST_PATH = "/test";
-            mockServer("GET", TEST_PATH);
-
-            await httpRequest(http, `http://user:pwd@${getHost()}${TEST_PATH}`);
-
-            assertMetrics(this.metrics, {
-                path: TEST_PATH
-            });
-        });
-    });
-
     // used by npm openwhisk library (action invocations)
     describe("needle", function() {
         it("needle http GET", async function() {
@@ -692,6 +768,38 @@ describe("probe http-client", function() {
             assertMetrics(this.metrics, {
                 protocol: "https",
                 path: TEST_PATH
+            });
+        });
+    });
+
+    // used by Nui worker sdk
+    describe("httptransfer", function() {
+        it("httptransfer download file", async function() {
+            const TEST_PATH = "/test";
+            mockServer("GET", TEST_PATH, BIG_CONTENT.toString());
+            mockFs();
+
+            await downloadFile(`http://${getHost()}${TEST_PATH}`, "test.txt");
+            assert.equal(await fs.readFile("test.txt"), BIG_CONTENT.toString());
+
+            assertMetrics(this.metrics, {
+                path: TEST_PATH,
+                responseBodySize: BIG_CONTENT.length
+            });
+        });
+
+        it("httptransfer upload file", async function() {
+            const TEST_PUT_PATH = "/put";
+            mockServer("PUT", TEST_PUT_PATH);
+
+            mockFs({ "test.txt": BIG_CONTENT });
+
+            await uploadFile("test.txt", `http://${getHost()}${TEST_PUT_PATH}`);
+
+            assertMetrics(this.metrics, {
+                method: "PUT",
+                path: TEST_PUT_PATH,
+                requestBodySize: BIG_CONTENT.length
             });
         });
     });
