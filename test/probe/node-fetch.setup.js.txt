@@ -30,6 +30,9 @@ httpClientProbe.start((metrics) => {
     metricCounter++;
 });
 
+// prevent tests from hanging at end
+process.env.__OW_DEADLINE = Date.now() + 10;
+
 after(() => {
     if (metricCounter <= 10) {
         throw new Error("Did not properly instrument node http client, test results are not valid");
