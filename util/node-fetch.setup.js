@@ -21,10 +21,11 @@
 
 console.log("Injecting lib/instrument/http-client into node-fetch tests...");
 
-const httpClientProbe = require("../../lib/probe/http-client");
+const httpClientProbe = require("../lib/probe/http-client");
 
 let metricCounter = 0;
 
+// eslint-disable-next-line no-unused-vars
 httpClientProbe.start((metrics) => {
     // console.log(metrics);
     metricCounter++;
