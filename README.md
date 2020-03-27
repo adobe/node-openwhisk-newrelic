@@ -3,7 +3,7 @@
 
 # node-openwhisk-newrelic
 
-Library for gathering metrics from Apache OpenWhisk actions and sending them to New Relic
+Library for gathering metrics from Apache OpenWhisk actions and sending them to New Relic Insights.
 
 ## NewRelic Insert API JSON format guidelines
 
@@ -58,7 +58,7 @@ metrics.activationFinished();
 
 Supported instrumentation:
 
-* outgoing http requests (via the node `http` and `https` modules)
+* outgoing http requests (via the node `http` and `https` modules). [reference documentation](https://git.corp.adobe.com/nui/nui/blob/master/dev/monitoring.md#http)
 
 To enable instrumentation, wrap the action main function in `NewRelic.instrument()`. A complete example might look like this:
 
