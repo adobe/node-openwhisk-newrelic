@@ -215,6 +215,8 @@ describe("probe http-client", function() {
         server.stop(done);
 
         mockFs.restore();
+
+        delete process.env.__OW_DEADLINE;
     });
 
     function mockServer(method, path, responseBody) {
@@ -302,15 +304,16 @@ describe("probe http-client", function() {
             });
         });
 
-        // TODO: fix missing metrics if response is not read
-        it.skip("node http GET without reading response", async function() {
+        it("node http GET without reading response", async function() {
             const TEST_PATH = "/test";
             mockServer("GET", TEST_PATH);
 
+            process.env.__OW_DEADLINE = Date.now() + 10;
+
             await httpRequest(http, `http://${getHost()}${TEST_PATH}`, {noResponseListener: true});
 
-            // wait for next ticks
-            await sleep(10);
+            // wait threshold
+            await sleep(20);
 
             assertMetrics(this.metrics, {
                 path: TEST_PATH

@@ -21,14 +21,18 @@
 
 console.log("Injecting lib/instrument/http-client into node-fetch tests...");
 
-const httpClientProbe = require("../../lib/probe/http-client");
+const httpClientProbe = require("../lib/probe/http-client");
 
 let metricCounter = 0;
 
+// eslint-disable-next-line no-unused-vars
 httpClientProbe.start((metrics) => {
     // console.log(metrics);
     metricCounter++;
 });
+
+// prevent tests from hanging at end
+process.env.__OW_DEADLINE = Date.now() + 10;
 
 after(() => {
     if (metricCounter <= 10) {
