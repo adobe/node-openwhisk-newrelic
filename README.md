@@ -58,7 +58,11 @@ metrics.activationFinished();
 
 Supported instrumentation:
 
-* outgoing http requests (via the node `http` and `https` modules). [reference documentation](https://git.corp.adobe.com/nui/nui/blob/master/dev/monitoring.md#http)
+* **http** requests (outgoing requests, via the node `http` and `https` modules):
+  - [reference documentation](https://git.corp.adobe.com/nui/nui/blob/master/dev/monitoring.md#http)
+  - on by default
+  - can be disabled with environment variable: `OPENWHISK_NEWRELIC_DISABLE_HTTP_INSTRUMENTATION=true`
+  - can also be disabled by setting `disableHttpClient: true` in the options passed to `NewRelic.instrument()`
 
 To enable instrumentation, wrap the action main function in `NewRelic.instrument()`. A complete example might look like this:
 
@@ -76,6 +80,12 @@ async function main(params) {
 }
 
 exports.main = NewRelic.instrument(main);
+```
+
+To disable all instrumentation (for example in unit tests), set this environment variable:
+
+```
+OPENWHISK_NEWRELIC_DISABLE_ALL_INSTRUMENTATION=true
 ```
 
 ### Action Timeout
