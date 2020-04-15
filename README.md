@@ -105,7 +105,7 @@ In case you want to opt out of the action timeout, (example: unit tests) there a
    ```
 
 2. Set the environment variable: `DISABLE_ACTION_TIMEOUT_METRIC` to `true`:
-   
+
    ```
    export DISABLE_ACTION_TIMEOUT_METRIC = true
    ```
@@ -127,3 +127,9 @@ const metrics = new NewRelic({
     }
 });
 ```
+
+### Contributing
+Contributions are welcomed! Read the [Contributing Guide](./.github/CONTRIBUTING.md) for more information.
+
+### Licensing
+This project is licensed under the Apache V2 License. See [LICENSE](LICENSE) for more information.
