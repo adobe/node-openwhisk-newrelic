@@ -1,6 +1,6 @@
 {
   "name": "@nui/openwhisk-newrelic",
-  "version": "7.0.0",
+  "version": "8.0.0",
   "main": "index.js",
   "description": "Library for gathering metrics for Apache OpenWhisk actions and sending them to NewRelic",
   "author": {
