@@ -329,11 +329,9 @@ describe("NewRelic", function() {
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             process.env.__OW_DEADLINE = Date.now() + 100;
-            new NewRelic( Object.assign( {}, FAKE_PARAMS, {
-                actionTimeoutMetricsCb: () => {
+            new NewRelic( {  ...FAKE_PARAMS, actionTimeoutMetricsCb: () => {
                     return { test: 'add_value'};
-                }
-            }));
+                }});
 
             await MetricsTestHelper.metricsDone(300);
             MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
@@ -347,14 +345,12 @@ describe("NewRelic", function() {
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             process.env.__OW_DEADLINE = Date.now() + 100;
-            new NewRelic( Object.assign( {}, FAKE_PARAMS, {
-                actionTimeoutMetricsCb: () => {
+            new NewRelic( {  ...FAKE_PARAMS, actionTimeoutMetricsCb: () => {
                     return {
                         eventType: "custom",
                         test: 'add_value'
                     };
-                }
-            }));
+                }});
 
             await MetricsTestHelper.metricsDone(300);
             MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
@@ -368,9 +364,7 @@ describe("NewRelic", function() {
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             process.env.__OW_DEADLINE = Date.now() + 100;
-            new NewRelic( Object.assign( {}, FAKE_PARAMS, {
-                actionTimeoutMetricsCb: { test: 'add_value'}
-            }));
+            new NewRelic( {  ...FAKE_PARAMS, actionTimeoutMetricsCb: { test: 'add_value'}});
 
             await MetricsTestHelper.metricsDone(300);
             MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
@@ -386,9 +380,7 @@ describe("NewRelic", function() {
                 .reply(200)
 
             process.env.__OW_DEADLINE = Date.now() + 100;
-            new NewRelic( Object.assign( {}, FAKE_PARAMS, {
-                disableActionTimeout: true
-            } ));
+            new NewRelic( {  ...FAKE_PARAMS, disableActionTimeout: true });
             await sleep(300);
             assert.ok(!mustNotHappen.isDone(), "timeout metrics was sent even though it should be disabled");
         });

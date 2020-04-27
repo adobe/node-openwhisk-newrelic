@@ -36,7 +36,7 @@ const axios = require('axios');
 const http = require('http');
 const https = require('https');
 const needle = require('needle');
-const { downloadFile, uploadFile } = require('@nui/node-httptransfer');
+const { downloadFile, uploadFile } = require('@adobe/httptransfer');
 
 // for tests using mock-http-server which is a real local webserver
 // that  can only run on "localhost"
@@ -128,13 +128,11 @@ function doAssertMetrics(metrics, opts) {
 function assertMetricsNock(metrics, opts) {
     doAssertMetrics(
         metrics,
-        Object.assign({
-            host: TEST_HOST_NOCK,
+        {host: TEST_HOST_NOCK,
             domain: TEST_DOMAIN_NOCK,
             // nock messes with requests and prevents certain things
             // (no DNS resolution, wrong order of events)
-            ignoreDurations: true
-        }, opts)
+            ignoreDurations: true, ...opts}
     );
 }
 
@@ -188,9 +186,7 @@ describe("probe http-client", function() {
     function assertMetrics(metrics, opts={}) {
         doAssertMetrics(
             metrics,
-            Object.assign({
-                port: opts.protocol === "https" ? server.getHttpsPort() : server.getHttpPort()
-            }, opts)
+            {port: opts.protocol === "https" ? server.getHttpsPort() : server.getHttpPort(), ...opts}
         );
     }
 
