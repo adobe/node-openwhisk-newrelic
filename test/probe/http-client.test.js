@@ -126,14 +126,15 @@ function doAssertMetrics(metrics, opts) {
 }
 
 function assertMetricsNock(metrics, opts) {
-    doAssertMetrics(
-        metrics,
-        {host: TEST_HOST_NOCK,
+    doAssertMetrics(metrics,
+        {
+            ...opts,
+            host: TEST_HOST_NOCK,
             domain: TEST_DOMAIN_NOCK,
             // nock messes with requests and prevents certain things
             // (no DNS resolution, wrong order of events)
-            ignoreDurations: true, ...opts}
-    );
+            ignoreDurations: true
+        });
 }
 
 function assertErrorMetricsNock(metrics, opts) {
@@ -183,10 +184,12 @@ describe("probe http-client", function() {
         return `${TEST_HOST}:${server.getHttpsPort()}`;
     }
 
-    function assertMetrics(metrics, opts={}) {
-        doAssertMetrics(
-            metrics,
-            {port: opts.protocol === "https" ? server.getHttpsPort() : server.getHttpPort(), ...opts}
+    function assertMetrics(metrics, opts = {}) {
+        doAssertMetrics( metrics,
+            {
+                ...opts,
+                port: opts.protocol === "https" ? server.getHttpsPort() : server.getHttpPort()
+            }
         );
     }
 
@@ -766,7 +769,7 @@ describe("probe http-client", function() {
         });
     });
 
-    // used by Nui worker sdk
+    // used by @adobe/asset-compute-sdk
     describe("httptransfer", function() {
         it("httptransfer download file", async function() {
             const TEST_PATH = "/test";

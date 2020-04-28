@@ -1,5 +1,5 @@
 <!--- when a new release happens, the VERSION and URL in the badge have to be manually updated because it's a private registry --->
-[![npm version](https://img.shields.io/badge/%40nui%2Fopenwhisk--newrelic-9.0.0-blue.svg)](https://artifactory.corp.adobe.com/artifactory/npm-nui-release/@nui/openwhisk-newrelic/-/@nui/openwhisk-newrelic-9.0.0.tgz)
+[![Version](https://img.shields.io/npm/v/@adobe/node-openwhisk-newrelic.svg)](https://npmjs.org/package/@adobe/node-openwhisk-newrelic)
 
 # node-openwhisk-newrelic
 
@@ -24,7 +24,7 @@ Reference: <https://docs.newrelic.com/docs/insights/insights-data-sources/custom
 Initialize the New Relic Metrics agent. This will start a `setTimeout` that will send metrics if your action is close to timeout using `__OW_DEADLINE`
 
 ```javascript
-const NewRelic = require('@nui/openwhisk-newrelic');
+const NewRelic = require('@adobe/node-openwhisk-newrelic');
 const metrics = new NewRelic({
     newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
     newRelicApiKey: 'YOUR_API_KEY',
