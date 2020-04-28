@@ -6,13 +6,7 @@
   "author": {
     "name": "Adobe Systems Inc."
   },
-  "publishConfig": {
-    "registry": "https://artifactory.corp.adobe.com/artifactory/api/npm/npm-nui-release-local"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://git.corp.adobe.com/nui/node-openwhisk-newrelic.git"
-  },
+  "repository": "adobe/node-openwhisk-newrelic.git",
   "dependencies": {
     "cls-hooked": "^4.2.2",
     "debug": "^4.1.1",
