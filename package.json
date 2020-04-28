@@ -1,8 +1,9 @@
 {
   "name": "@adobe/node-openwhisk-newrelic",
-  "version": "1.0.0",
-  "main": "index.js",
   "description": "Library for gathering metrics for Apache OpenWhisk actions and sending them to NewRelic",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "main": "index.js",
   "author": {
     "name": "Adobe Systems Inc."
   },
@@ -28,6 +29,14 @@
     "request": "^2.88.2",
     "request-promise-native": "^1.0.8"
   },
+  "keywords": [
+    "scripts",
+    "openwhisk",
+    "new relic",
+    "library",
+    "metrics",
+    "adobe"
+  ],
   "scripts": {
     "test": "nyc --reporter=html --reporter=text mocha test --recursive && npm run checkout-node-fetch && npm run test-node-fetch",
     "checkout-node-fetch": "rm -rf node-fetch; git clone https://github.com/node-fetch/node-fetch.git; cd node-fetch; git checkout b44c29521d61e0badb0220ac4d59bcfeef986ea2; npm install; patch -p1 < ../test/node-fetch-disable-flaky-tests.patch",
