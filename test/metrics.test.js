@@ -179,11 +179,15 @@ describe("metrics", () => {
                 const flatten = Metrics.flatten({ e });
 
                 assert.deepStrictEqual(flatten.e_code, "ENOENT");
-                assert.deepStrictEqual(flatten.e_errno, -2);
                 assert.deepStrictEqual(flatten.e_name, "Error");
                 assert.deepStrictEqual(flatten.e_path, "does-not-exist.dat");
                 assert.deepStrictEqual(flatten.e_syscall, "open");
                 assert.deepStrictEqual(true, flatten.e_message.includes('does-not-exist.dat'));
+
+                if (flatten.e_errno !== -2 && flatten.e_errno !== -4058) {
+
+                    assert.fail("Error value did not match");
+                }
             }
         });
         it("not-iterable", () => {
