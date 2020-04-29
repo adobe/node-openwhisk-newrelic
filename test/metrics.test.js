@@ -21,52 +21,73 @@ const Metrics = require('../lib/metrics');
 const process = require("process");
 
 describe("metrics", () => {
+
     describe("timestamps", () => {
+
         it("timestamp", () => {
             const timestamp = Metrics.timestamp();
             assert.ok(typeof timestamp === "number");
         });
     });
+
     describe("openwhisk", () => {
-        it("should return an empty object when no environment variables are set", () => {
-            assert.deepStrictEqual(Metrics.openwhisk(), {});
-        });
-        it("should return and object with just the action name - simple", () => {
-            process.env.__OW_ACTION_NAME = "action";
+
+        it("should return nodeVersion metric", () => {
             assert.deepStrictEqual(Metrics.openwhisk(), {
-                actionName: "action"
+                nodeVersion: process.version.substr(1)
             });
+        });
+
+        it("should return an object with just the action name - simple", () => {
+            process.env.__OW_ACTION_NAME = "action";
+            assert.strictEqual(Metrics.openwhisk().actionName, "action");
             delete process.env.__OW_ACTION_NAME;
         });
+
         it("should return an object with just the action name", () => {
             process.env.__OW_ACTION_NAME = "/namspace/action";
-            assert.deepStrictEqual(Metrics.openwhisk(), {
-                actionName: "action"
-            });
+            assert.strictEqual(Metrics.openwhisk().actionName, "action");
             delete process.env.__OW_ACTION_NAME;
         });
 
         it("should return an object with package name and action name", () => {
             process.env.__OW_ACTION_NAME = "/namspace/package/action";
-            assert.deepStrictEqual(Metrics.openwhisk(), {
-                actionName: "action",
-                package:"package"
-            });
+            assert.strictEqual(Metrics.openwhisk().actionName, "action");
+            assert.strictEqual(Metrics.openwhisk().package, "package");
             delete process.env.__OW_ACTION_NAME;
         });
+
         it("should return an object with the namespace", () => {
             process.env.__OW_NAMESPACE = "namespace";
-            assert.deepStrictEqual(Metrics.openwhisk(), {
-                namespace: "namespace"
-            });
+            assert.strictEqual(Metrics.openwhisk().namespace, "namespace");
             delete process.env.__OW_NAMESPACE;
         });
-        it("should return an object with the activationId", () => {
+
+        it("should return an object with the activationId and transactionId", () => {
             process.env.__OW_ACTIVATION_ID = "activationId";
-            assert.deepStrictEqual(Metrics.openwhisk(), {
-                activationId: "activationId"
-            });
+            process.env.__OW_TRANSACTION_ID = "transactionId";
+            assert.strictEqual(Metrics.openwhisk().activationId, "activationId");
+            assert.strictEqual(Metrics.openwhisk().transactionId, "transactionId");
             delete process.env.__OW_ACTIVATION_ID;
+            delete process.env.__OW_TRANSACTION_ID;
+        });
+
+        it("should return an object with the cloud and region", () => {
+            process.env.__OW_CLOUD = "aws";
+            process.env.__OW_REGION = "us-east-1";
+            assert.strictEqual(Metrics.openwhisk().cloud, "aws");
+            assert.strictEqual(Metrics.openwhisk().region, "us-east-1");
+            delete process.env.__OW_CLOUD;
+            delete process.env.__OW_REGION;
+        });
+
+        it("should return an object with the hostname and container name", () => {
+            process.env.HOSTNAME = "c83a670f6ab6";
+            process.env.MESOS_CONTAINER_NAME = "mesos-d90db22e-d4e6-446c-841b-472f08738cc0-S24.02ffc381-30e9-40ce-b182-6dc6dd7c57d2";
+            assert.strictEqual(Metrics.openwhisk().activationHost, "c83a670f6ab6");
+            assert.strictEqual(Metrics.openwhisk().activationContainerName, "mesos-d90db22e-d4e6-446c-841b-472f08738cc0-S24.02ffc381-30e9-40ce-b182-6dc6dd7c57d2");
+            delete process.env.HOSTNAME;
+            delete process.env.MESOS_CONTAINER_NAME;
         });
     })
 
