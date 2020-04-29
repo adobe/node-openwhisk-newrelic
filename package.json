@@ -7,7 +7,7 @@
   "author": {
     "name": "Adobe Systems Inc."
   },
-  "repository": "adobe/node-openwhisk-newrelic.git",
+  "repository": "adobe/node-openwhisk-newrelic",
   "dependencies": {
     "cls-hooked": "^4.2.2",
     "debug": "^4.1.1",
