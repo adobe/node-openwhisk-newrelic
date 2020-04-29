@@ -124,10 +124,10 @@ describe("metrics", () => {
                     [ "key2", "value2" ],
                     [ "key3", true ],
                     [ "key4", { nested: "x" } ],
-                    [ 123, 456 ] 
+                    [ 123, 456 ]
                 ])
             });
-            assert.deepStrictEqual(flatten, { 
+            assert.deepStrictEqual(flatten, {
                 value_key1: 123,
                 value_key2: "value2",
                 value_key3: 1,
@@ -165,25 +165,25 @@ describe("metrics", () => {
         it("error", () => {
             const e = Error("error message");
             const flatten = Metrics.flatten({ e });
-            assert.deepStrictEqual(flatten, { 
+            assert.deepStrictEqual(flatten, {
                 e_name: "Error",
                 e_message: "error message",
             });
         });
         it("system-error", async () => {
+
             try {
                 await fs.readFile("does-not-exist.dat");
                 assert.fail("should not reach this line");
             } catch (e) {
                 const flatten = Metrics.flatten({ e });
-                assert.deepStrictEqual(flatten, { 
-                    e_code: "ENOENT",
-                    e_errno: -2,
-                    e_message: "ENOENT: no such file or directory, open 'does-not-exist.dat'",
-                    e_name: "Error",
-                    e_path: "does-not-exist.dat",
-                    e_syscall: "open"
-                });
+
+                assert.deepStrictEqual(flatten.e_code, "ENOENT");
+                assert.deepStrictEqual(flatten.e_errno, -2);
+                assert.deepStrictEqual(flatten.e_name, "Error");
+                assert.deepStrictEqual(flatten.e_path, "does-not-exist.dat");
+                assert.deepStrictEqual(flatten.e_syscall, "open");
+                assert.deepStrictEqual(true, flatten.e_message.includes('does-not-exist.dat'));
             }
         });
         it("not-iterable", () => {
@@ -192,7 +192,7 @@ describe("metrics", () => {
                 for (const a of x) { a; }
             } catch (e) {
                 const flatten = Metrics.flatten({ e });
-                assert.deepStrictEqual(flatten, { 
+                assert.deepStrictEqual(flatten, {
                     e_message: "x is not iterable",
                     e_name: "TypeError"
                 });
