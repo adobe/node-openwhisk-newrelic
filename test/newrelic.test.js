@@ -329,11 +329,12 @@ describe("NewRelic", function() {
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             process.env.__OW_DEADLINE = Date.now() + 100;
-            new NewRelic( Object.assign( {}, FAKE_PARAMS, {
+            new NewRelic({
+                ...FAKE_PARAMS,
                 actionTimeoutMetricsCb: () => {
                     return { test: 'add_value' };
                 }
-            }));
+            });
 
             await MetricsTestHelper.metricsDone(300);
             MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
