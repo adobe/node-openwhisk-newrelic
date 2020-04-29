@@ -38,10 +38,12 @@
     "adobe"
   ],
   "scripts": {
-    "test": "nyc --reporter=html --reporter=text mocha test --recursive && npm run test1 && npm run test2 && npm run test3 && npm run test-node-fetch",
+    "test": "nyc --reporter=html --reporter=text mocha test --recursive && npm run test1 && npm run test2 && npm run test3 && npm run test4 && npm run test5 && npm run test-node-fetch",
     "test1": "rm -rf node-fetch",
-    "test2": "git clone https://github.com/node-fetch/node-fetch.git; cd node-fetch; git checkout b44c29521d61e0badb0220ac4d59bcfeef986ea2",
-    "test3": "npm install; patch -p1 < ../test/node-fetch-disable-flaky-tests.patch",
+    "test2": "git clone https://github.com/node-fetch/node-fetch.git",
+    "test3": "cd node-fetch",
+    "test4": "git checkout b44c29521d61e0badb0220ac4d59bcfeef986ea2",
+    "test5": "npm install; patch -p1 < ../test/node-fetch-disable-flaky-tests.patch",
     "test-node-fetch": "cd node-fetch && npm test -- --file ../util/node-fetch.setup.js",
     "posttest": "eslint ./",
     "beautify": "eslint ./ --fix"
