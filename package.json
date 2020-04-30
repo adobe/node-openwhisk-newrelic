@@ -40,9 +40,9 @@
   "scripts": {
     "test": "nyc --reporter=html --reporter=text mocha test --recursive && npm run test1 && npm run test2 && npm run test3 && npm run test4 && npm run test-node-fetch",
     "test1": "rm -rf node-fetch; git clone https://github.com/node-fetch/node-fetch.git",
-    "test2": "cp test/node-fetch-disable-flaky-tests.patch node-fetch",
+    "test2": "mv test/node-fetch-disable-flaky-tests.patch node-fetch",
     "test3": "cd node-fetch; git checkout b44c29521d61e0badb0220ac4d59bcfeef986ea2; npm install; cd node-fetch; patch -p1 < node-fetch-disable-flaky-tests.patch",
-    "test4": "cp util/node-fetch.setup.js node-fetch",
+    "test4": "mv util/node-fetch.setup.js node-fetch",
     "test-node-fetch": "cd node-fetch && npm test -- --file node-fetch.setup.js",
     "posttest": "eslint ./",
     "beautify": "eslint ./ --fix"
