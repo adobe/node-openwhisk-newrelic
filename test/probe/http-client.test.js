@@ -158,7 +158,6 @@ function assertErrorMetricsNock(metrics, opts) {
 }
 
 describe("probe http-client", function() {
-    this.timeout(6000);
     let server;
 
     before(async function() {

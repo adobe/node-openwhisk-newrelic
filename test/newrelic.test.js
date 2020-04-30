@@ -125,7 +125,7 @@ describe("NewRelic", function() {
     });
 
     describe("send()", function() {
-        this.timeout(6000);
+
         it("sendMetrics", async function() {
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
@@ -310,7 +310,7 @@ describe("NewRelic", function() {
     });
 
     describe("timeout metrics", function() {
-        this.timeout(6000);
+
         it("timeout metrics", async function() {
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
