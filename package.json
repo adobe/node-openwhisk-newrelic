@@ -42,9 +42,9 @@
     "test1": "rm -rf node-fetch",
     "test2": "git clone https://github.com/node-fetch/node-fetch.git",
     "test3": "cd node-fetch",
-    "test4": "git checkout b44c29521d61e0badb0220ac4d59bcfeef986ea2",
-    "test5": "npm install",
-    "test6": "patch -p1 < ../test/node-fetch-disable-flaky-tests.patch",
+    "test4": "cd node-fetch; git checkout b44c29521d61e0badb0220ac4d59bcfeef986ea2",
+    "test5": "cd node-fetch; npm install",
+    "test6": "cd node-fetch; patch -p1 < ../test/node-fetch-disable-flaky-tests.patch",
     "test-node-fetch": "cd node-fetch && npm test -- --file ../util/node-fetch.setup.js",
     "posttest": "eslint ./",
     "beautify": "eslint ./ --fix"
