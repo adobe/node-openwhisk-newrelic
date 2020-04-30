@@ -128,6 +128,28 @@ const metrics = new NewRelic({
 });
 ```
 
+### Standard
+
+Sent for all metrics.
+
+| Attribute         | Format           | Description                     |
+|-------------------|------------------|---------------------------------|
+| `eventType`       | string           | Event type, required, [standard New Relic Insights type](https://docs.newrelic.com/docs/insights/insights-data-sources/custom-data/insights-custom-data-requirements-limits). |
+| `timestamp`       | utc millis (?)   | The UTC timestamp to associate with the event. [Standard New Relic Insights type](https://docs.newrelic.com/docs/insights/insights-data-sources/custom-data/insights-custom-data-requirements-limits). |
+| `namespace`       | string           | OpenWhisk namespace of the action that sent the event. |
+| `package`         | string           | OpenWhisk package name of the action that sent the event.  |
+| `actionName`      | string           | OpenWhisk action name (without package) of the action that sent the event. |
+| `activationId`    | string           | OpenWhisk activation id of the action that sent the event. |
+| `appName`         | string           | Name of the invoking IO console integration (API key label) |
+| `clientId`        | string           | API key = IMS client id of the invoking technical account/integration/client. |
+| `sourceName`      | string           | Filename of the source. |
+| `cloud`           | string           | Cloud in which the activation ran, e.g. `aws` or `azure` (`__OW_CLOUD`). |
+| `region`          | string           | Region in which the activation ran, e.g. `us-east-1` (`__OW_REGION`). |
+| `transactionId`   | string           | OpenWhisk transaction id (`__OW_TRANSACTION_ID`). |
+| `activationHost`  | string           | Hostname where the activation ran (`HOSTNAME` env var). |
+| `activationContainerName`  | string  | Container name where the activation ran (`MESOS_CONTAINER_NAME` env var). |
+| `nodeVersion`     | string           | Nodejs version on which the action ran, e.g. `13.12.0`. |
+
 ### Http
 
 Tracks each outgoing http request. Automatically instrumented in node and done in all actions.
@@ -165,31 +187,6 @@ Event type: `http`
 | `error` | string | Only set if there was a low-level connection error. Set as `true` in json, represented as `1` in NewRelic. | `1` |
 | `errorCode` | string | OS or nodejs error code (name or number) in case there was a low-level connection error. `110` means `ETIMEDOUT`. | `"ECONNRESET"` or `"110"` |
 | `errorMessage` | string | Error message in case there was a low-level connection error. | `"socket hang up"` |
-
-### Standard
-
-Sent for all metrics.
-
-| Attribute         | Format           | Description                     |
-|-------------------|------------------|---------------------------------|
-| `eventType`       | string           | Event type, required, [standard New Relic Insights type](https://docs.newrelic.com/docs/insights/insights-data-sources/custom-data/insights-custom-data-requirements-limits). |
-| `timestamp`       | utc millis (?)   | The UTC timestamp to associate with the event. [Standard New Relic Insights type](https://docs.newrelic.com/docs/insights/insights-data-sources/custom-data/insights-custom-data-requirements-limits). |
-| `requestId`       | string           | x-request-id of the original incoming http request |
-| `namespace`       | string           | OpenWhisk namespace of the action that sent the event. |
-| `package`         | string           | OpenWhisk package name of the action that sent the event.  |
-| `actionName`      | string           | OpenWhisk action name (without package) of the action that sent the event. |
-| `activationId`    | string           | OpenWhisk activation id of the action that sent the event. |
-| `orgId`           | string           | IMS organization id of the invoking technical account/integration/client. |
-| `appName`         | string           | Name of the invoking IO console integration (API key label) |
-| `clientId`        | string           | API key = IMS client id of the invoking technical account/integration/client. |
-| `sourceName`      | string           | Filename of the source. |
-| `sourceSize`      | number           | Size in bytes of the source. |
-| `cloud`           | string           | Cloud in which the activation ran, e.g. `aws` or `azure` (`__OW_CLOUD`). |
-| `region`          | string           | Region in which the activation ran, e.g. `us-east-1` (`__OW_REGION`). |
-| `transactionId`   | string           | OpenWhisk transaction id (`__OW_TRANSACTION_ID`). |
-| `activationHost`  | string           | Hostname where the activation ran (`HOSTNAME` env var). |
-| `activationContainerName`  | string  | Container name where the activation ran (`MESOS_CONTAINER_NAME` env var). |
-| `nodeVersion`     | string           | Nodejs version on which the action ran, e.g. `13.12.0`. |
 
 ### Contributing
 Contributions are welcomed! Read the [Contributing Guide](./.github/CONTRIBUTING.md) for more information.
