@@ -139,7 +139,7 @@ describe("NewRelic", function() {
                 eventType: EVENT_TYPE,
                 test: "value"
             }]);
-        });
+        }).timeout(6000);
 
         it("sendMetrics - default metrics frozen object", async function() {
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
@@ -323,7 +323,7 @@ describe("NewRelic", function() {
                 eventType: "timeout",
                 duration: /\d+/
             }]);
-        });
+        }).timeout(6000);
 
         it("timeout metrics with callback", async function() {
             const receivedMetrics = MetricsTestHelper.mockNewRelic();

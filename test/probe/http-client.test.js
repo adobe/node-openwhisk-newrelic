@@ -174,7 +174,7 @@ describe("probe http-client", function() {
             key: SSL_KEYS.serviceKey,
             cert: SSL_KEYS.certificate
         });
-    });
+    }).timeout(6000);
 
     function getHost() {
         return `${TEST_HOST}:${server.getHttpPort()}`;
