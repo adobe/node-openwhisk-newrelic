@@ -217,7 +217,7 @@ describe("NewRelic", function() {
 
             const activations = [];
             for (let i = 0; i < ACTIVATION_COUNT; i++) {
-                activations[i] = NewRelic.instrument(async () => {
+                const activePromise = NewRelic.instrument(async () => {
                     // add some random separation of the different activations
                     await sleep(Math.random() * 10);
 
@@ -232,8 +232,10 @@ describe("NewRelic", function() {
                     await metrics.send(EVENT_TYPE, { test: "value" });
                     await metrics.activationFinished();
                 })();
+
+                activations.push(activePromise);
             }
-            await Promise.all(activations);
+            await Promise.allSettled(activations);
 
             await MetricsTestHelper.metricsDone(500);
 
@@ -248,11 +250,12 @@ describe("NewRelic", function() {
                 });
             });
             // make sure all activation ids are found, but could be any order
+            assert(receivedMetrics.length === ACTIVATION_COUNT);
             for (let i = 0; i < ACTIVATION_COUNT; i++) {
                 assert(receivedMetrics.some(m => m.activationId === i), `did not find activation id ${i}`);
             }
         });
-    });
+    }).timeout(60000);
 
     it("add()", async function() {
         const receivedMetrics = MetricsTestHelper.mockNewRelic();
@@ -293,7 +296,7 @@ describe("NewRelic", function() {
             added: "metric3",
             anotherAdded: "metric"
         }]);
-});
+    });
 
     it("get()", async function() {
 
