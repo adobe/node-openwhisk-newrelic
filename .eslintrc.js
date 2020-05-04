@@ -11,5 +11,5 @@ governing permissions and limitations under the License.
 */
 
 module.exports = {
-    "extends": "@nui/eslint-config-asset-compute"
+    "extends": "@nui/eslint-config"
 };
