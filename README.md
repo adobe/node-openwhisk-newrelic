@@ -1,5 +1,5 @@
 <!--- when a new release happens, the VERSION and URL in the badge have to be manually updated because it's a private registry --->
-[![npm version](https://img.shields.io/badge/%40nui%2Fopenwhisk--newrelic-10.0.0-blue.svg)](https://artifactory.corp.adobe.com/artifactory/npm-nui-release/@nui/openwhisk-newrelic/-/@nui/openwhisk-newrelic-10.0.0.tgz)
+[![Version](https://img.shields.io/npm/v/@adobe/node-openwhisk-newrelic.svg)](https://npmjs.org/package/@adobe/node-openwhisk-newrelic)
 
 # node-openwhisk-newrelic
 
@@ -24,7 +24,7 @@ Reference: <https://docs.newrelic.com/docs/insights/insights-data-sources/custom
 Initialize the New Relic Metrics agent. This will start a `setTimeout` that will send metrics if your action is close to timeout using `__OW_DEADLINE`
 
 ```javascript
-const NewRelic = require('@nui/openwhisk-newrelic');
+const NewRelic = require('@adobe/node-openwhisk-newrelic');
 const metrics = new NewRelic({
     newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
     newRelicApiKey: 'YOUR_API_KEY',
@@ -59,7 +59,7 @@ metrics.activationFinished();
 Supported instrumentation:
 
 * **http** requests (outgoing requests, via the node `http` and `https` modules):
-  - [reference documentation](https://git.corp.adobe.com/nui/nui/blob/master/dev/monitoring.md#http)
+  - [reference documentation](#http)
   - on by default
   - can be disabled with environment variable: `OPENWHISK_NEWRELIC_DISABLE_HTTP_INSTRUMENTATION=true`
   - can also be disabled by setting `disableHttpClient: true` in the options passed to `NewRelic.instrument()`
@@ -127,6 +127,66 @@ const metrics = new NewRelic({
     }
 });
 ```
+
+### Standard
+
+Sent for all metrics.
+
+| Attribute         | Format           | Description                     |
+|-------------------|------------------|---------------------------------|
+| `eventType`       | string           | Event type, required, [standard New Relic Insights type](https://docs.newrelic.com/docs/insights/insights-data-sources/custom-data/insights-custom-data-requirements-limits). |
+| `timestamp`       | utc millis (?)   | The UTC timestamp to associate with the event. [Standard New Relic Insights type](https://docs.newrelic.com/docs/insights/insights-data-sources/custom-data/insights-custom-data-requirements-limits). |
+| `namespace`       | string           | OpenWhisk namespace of the action that sent the event. |
+| `package`         | string           | OpenWhisk package name of the action that sent the event.  |
+| `actionName`      | string           | OpenWhisk action name (without package) of the action that sent the event. |
+| `activationId`    | string           | OpenWhisk activation id of the action that sent the event. |
+| `appName`         | string           | Name of the invoking IO console integration (API key label) |
+| `clientId`        | string           | API key = IMS client id of the invoking technical account/integration/client. |
+| `sourceName`      | string           | Filename of the source. |
+| `cloud`           | string           | Cloud in which the activation ran, e.g. `aws` or `azure` (`__OW_CLOUD`). |
+| `region`          | string           | Region in which the activation ran, e.g. `us-east-1` (`__OW_REGION`). |
+| `transactionId`   | string           | OpenWhisk transaction id (`__OW_TRANSACTION_ID`). |
+| `activationHost`  | string           | Hostname where the activation ran (`HOSTNAME` env var). |
+| `activationContainerName`  | string  | Container name where the activation ran (`MESOS_CONTAINER_NAME` env var). |
+| `nodeVersion`     | string           | Nodejs version on which the action ran, e.g. `13.12.0`. |
+
+### Http
+
+Tracks each outgoing http request. Automatically instrumented in node and done in all actions.
+
+Naming is aligned with NewRelic's standard [SyntheticRequest](https://docs.newrelic.com/attribute-dictionary?attribute_name=&events_tids%5B%5D=8387) attributes.
+
+Event type: `http`
+
+| Attribute         | Format           | Description                     | Example      |
+|-------------------|------------------|---------------------------------|--------------|
+| [...](#standard) | | [All standard attributes](#standard) | |
+| `method` | string | HTTP method | `"POST"` |
+| `url` | string | complete URL of the request | `"https://eg-ingress.adobe.io/api/events"` |
+| `protocol` | string | protocol of the URL, `http:` or `https:` | `"https:"` |
+| `domain` | string | host without any subdomain for simpler aggregation: `<domain>.<tld>` | `"adobe.io"` |
+| `host` | string | hostname of the server | `"eg-ingress.adobe.io"` |
+| `port` | number | TCP port of the server | `443` |
+| `path` | string | path of the URL, including query parameters | `"/api/events"` |
+| `responseCode` | number | HTTP response status code | `200` |
+| `responseStatus` | string | HTTP response status text | `"OK"` |
+| `requestBodySize` | number | size of the HTTP request body | `1874` |
+| `responseBodySize` | number | size of the HTTP response body | `2` |
+| `contentType` | string | content-type of the response | `"application/json;charset=UTF-8"` |
+| `serverRequestId` | string | `x-request-id` header of the response, if present | `"cLqJ2lcWXUmXpnRCDULturVM9lTovQxx"` |
+| `localIPAddress` | string | IP address of the client | `"172.20.0.23"` |
+| `serverIPAddress` | string | IP address of the server | `"34.196.31.105"` |
+| `duration` | number | total duration of the request in milliseconds | `294.551398` |
+| `durationBlocked` | number | time until a socket was available in milliseconds | `0.587596` |
+| `durationDNS` | number | duration of DNS resolution in milliseconds | `0.441319` |
+| `durationConnect` | number | TCP connection duration in milliseconds | `1.138568` |
+| `durationSSL` | number | SSL handshake duration in milliseconds (https only) | `3.639361` |
+| `durationSend` | number | time it took to send the HTTP request. Note this currently does not work for streaming requests as done for our rendition uploads until we upgrade to Node 12+ in Adobe I/O Runtime. Until then the send time is included in the `durationConnect`. | `0.065885` |
+| `durationWait` | number | time between request was sent and first byte of response was received in milliseconds | `288.649511` |
+| `durationReceive` | number | time it took to receive the entire response body in milliseconds | `0.029158` |
+| `error` | string | Only set if there was a low-level connection error. Set as `true` in json, represented as `1` in NewRelic. | `1` |
+| `errorCode` | string | OS or nodejs error code (name or number) in case there was a low-level connection error. `110` means `ETIMEDOUT`. | `"ECONNRESET"` or `"110"` |
+| `errorMessage` | string | Error message in case there was a low-level connection error. | `"socket hang up"` |
 
 ### Contributing
 Contributions are welcomed! Read the [Contributing Guide](./.github/CONTRIBUTING.md) for more information.

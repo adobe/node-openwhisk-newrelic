@@ -1,18 +1,13 @@
 {
-  "name": "@nui/openwhisk-newrelic",
-  "version": "10.0.0",
-  "main": "index.js",
+  "name": "@adobe/openwhisk-newrelic",
   "description": "Library for gathering metrics for Apache OpenWhisk actions and sending them to NewRelic",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "main": "index.js",
   "author": {
     "name": "Adobe Systems Inc."
   },
-  "publishConfig": {
-    "registry": "https://artifactory.corp.adobe.com/artifactory/api/npm/npm-nui-release-local"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://git.corp.adobe.com/nui/node-openwhisk-newrelic.git"
-  },
+  "repository": "adobe/node-openwhisk-newrelic",
   "dependencies": {
     "cls-hooked": "^4.2.2",
     "debug": "^4.1.1",
@@ -20,25 +15,35 @@
   },
   "devDependencies": {
     "@nui/eslint-config": "^1.0.4",
-    "@nui/node-httptransfer": "^5.0.0",
+    "@adobe/httptransfer": "^1.0.0",
     "axios": "^0.19.2",
     "clone": "^2.1.2",
+    "eslint": "^6.8.0",
     "fs-extra": "^8.1.0",
-    "mocha": "^7.0.0",
-    "mock-fs": "^4.11.0",
-    "mock-http-server": "^1.4.1",
-    "needle": "^2.3.3",
+    "mocha": "^7.1.2",
+    "mock-fs": "^4.12.0",
+    "mock-http-server": "^1.4.2",
+    "needle": "^2.4.1",
     "nock": "^12.0.3",
-    "nyc": "^15.0.0",
+    "nyc": "^15.0.1",
     "pem": "^1.14.4",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.8"
   },
+  "keywords": [
+    "scripts",
+    "openwhisk",
+    "new relic",
+    "library",
+    "metrics",
+    "adobe"
+  ],
   "scripts": {
-    "test": "nyc --reporter=html --reporter=text mocha test --recursive && npm run checkout-node-fetch && npm run test-node-fetch",
+    "test": "nyc --reporter=html --reporter=text mocha test --timeout 20000 --recursive && npm run checkout-node-fetch && npm run test-node-fetch",
     "checkout-node-fetch": "rm -rf node-fetch; git clone https://github.com/node-fetch/node-fetch.git; cd node-fetch; git checkout b44c29521d61e0badb0220ac4d59bcfeef986ea2; npm install; patch -p1 < ../test/node-fetch-disable-flaky-tests.patch",
-    "test-node-fetch": "cd node-fetch && npm test -- --file ../util/node-fetch.setup.js",
-    "posttest": "eslint ./"
+    "test-node-fetch": "cd node-fetch && npm test -- --file ../util/node-fetch.setup.js && pwd",
+    "posttest": "eslint ./",
+    "beautify": "eslint ./ --fix"
   },
   "mocha": {
     "file": "test/logfile.setup.js"
