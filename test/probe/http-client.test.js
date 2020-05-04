@@ -15,12 +15,12 @@ governing permissions and limitations under the License.
 
 "use strict";
 
-const instrumentHttpClient = require("../../lib/probe/http-client");
-const sendQueue = require("../../lib/queue");
+const instrumentHttpClient = require('../../lib/probe/http-client');
+const sendQueue = require('../../lib/queue');
 
-const assert = require("assert");
-const nock = require("nock");
-const ServerMock = require("mock-http-server");
+const assert = require('assert');
+const nock = require('nock');
+const ServerMock = require('mock-http-server');
 const { promisify } = require('util');
 const sleep = promisify(setTimeout);
 const url = require('url');
@@ -30,8 +30,8 @@ const fs = require('fs').promises;
 const mockFs = require('mock-fs');
 
 // http frameworks tested
-const fetch = require("node-fetch");
-const request = require("request-promise-native");
+const fetch = require('node-fetch');
+const request = require('request-promise-native');
 const axios = require('axios');
 const http = require('http');
 const https = require('https');
@@ -54,7 +54,7 @@ const TEST_REQUEST_ID = "test-request-id";
 const MAX_UPLOAD_SIZE = 100*1024;
 const BIG_CONTENT = Buffer.alloc(MAX_UPLOAD_SIZE, "x");
 
-const NODE_MAJOR_VERSION = process.versions.node.split('.')[0];
+const NODE_MAJOR_VERSION = process.versions.node.split(".")[0];
 
 function readableFromBuffer(buffer) {
     const readable = new Readable();
@@ -67,7 +67,7 @@ function readableFromBuffer(buffer) {
 function doAssertMetrics(metrics, opts) {
     opts = opts || {};
     const host = opts.host || TEST_HOST;
-    const port = opts.port || (opts.protocol === "https" ? 443: 80);
+    const port = opts.port || (opts.protocol === "https" ? 443 : 80);
     const urlPort = ((port === 80 && (opts.protocol === undefined || opts.protocol === "http"))
                      || (port === 443 && opts.protocol === "https")) ? "" : `:${port}`;
     const path = opts.path;
@@ -139,7 +139,7 @@ function assertMetricsNock(metrics, opts) {
 
 function assertErrorMetricsNock(metrics, opts) {
     opts = opts || {};
-    opts.port = opts.port || (opts.protocol === "https" ? 443: 80);
+    opts.port = opts.port || (opts.protocol === "https" ? 443 : 80);
 
     assert(typeof metrics === "object");
     assert.strictEqual(metrics.host, TEST_HOST_NOCK);
