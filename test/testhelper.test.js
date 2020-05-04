@@ -14,7 +14,7 @@ governing permissions and limitations under the License.
 
 'use strict';
 
-const MetricsTestHelper = require("../lib/testhelper");
+const MetricsTestHelper = require("./testhelper");
 const assert = require("assert");
 
 const NON_OBJECTS = [
