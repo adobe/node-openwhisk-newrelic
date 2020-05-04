@@ -181,8 +181,8 @@ describe("metrics", () => {
                 assert.strictEqual(flatten.e_code, "ENOENT");
                 assert.strictEqual(flatten.e_name, "Error");
                 assert.strictEqual(flatten.e_syscall, "open");
-                assert.ok(flatten.e_message.includes('does-not-exist.dat'));
-                assert.ok(flatten.e_path.includes("does-not-exist.dat"));
+                assert(flatten.e_message.includes('does-not-exist.dat'));
+                assert(flatten.e_path.includes("does-not-exist.dat"));
 
                 if (flatten.e_errno !== -2 && flatten.e_errno !== -4058) {
 

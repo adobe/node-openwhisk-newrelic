@@ -15,7 +15,7 @@ governing permissions and limitations under the License.
 "use strict";
 
 const NewRelic = require('../lib/newrelic');
-const MetricsTestHelper = require('./testhelper');
+const MetricsTestHelper = require('../lib/testhelper');
 
 const assert = require("assert");
 const nock = require('nock');
