@@ -14,7 +14,7 @@
     "node-fetch": "^2.6.0"
   },
   "devDependencies": {
-    "@adobe/eslint-config-asset-compute": "^1.0.0",
+    "@nui/eslint-config": "^1.0.4",
     "@adobe/httptransfer": "^1.0.0",
     "axios": "^0.19.2",
     "clone": "^2.1.2",
