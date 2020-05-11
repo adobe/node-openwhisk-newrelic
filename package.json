@@ -44,7 +44,9 @@
     "checkout-node-fetch": "rm -rf node-fetch; git clone https://github.com/node-fetch/node-fetch.git; cd node-fetch; git checkout b44c29521d61e0badb0220ac4d59bcfeef986ea2; npm install; patch -p1 < ../test/node-fetch-disable-flaky-tests.patch",
     "test-node-fetch": "cd node-fetch && npm test -- --file ../util/node-fetch.setup.js && pwd",
     "posttest": "eslint ./",
-    "beautify": "eslint ./ --fix"
+    "beautify": "eslint ./ --fix",
+    "dep-license-details": "license-checker -unknown --out dependencies-licenses.log",
+    "dep-license-list": "license-checker --summary -unknown"
   },
   "mocha": {
     "file": "test/logfile.setup.js"
