@@ -33,9 +33,7 @@ describe("metrics", () => {
     describe("openwhisk", () => {
 
         it("should return nodeVersion metric", () => {
-            assert.deepStrictEqual(Metrics.openwhisk(), {
-                nodeVersion: process.version.substr(1)
-            });
+            assert.strictEqual(Metrics.openwhisk().nodeVersion, process.version.substr(1));
         });
 
         it("should return an object with just the action name - simple", () => {
@@ -89,7 +87,7 @@ describe("metrics", () => {
             delete process.env.HOSTNAME;
             delete process.env.MESOS_CONTAINER_NAME;
         });
-    })
+    });
 
     describe("flatten", () => {
         it("empty", () => {
