@@ -1,5 +1,5 @@
 <!--- when a new release happens, the VERSION and URL in the badge have to be manually updated because it's a private registry --->
-[![Version](https://img.shields.io/npm/v/@adobe/node-openwhisk-newrelic.svg)](https://npmjs.org/package/@adobe/node-openwhisk-newrelic)
+[![Version](https://img.shields.io/npm/v/@adobe/openwhisk-newrelic.svg)](https://npmjs.org/package/@adobe/openwhisk-newrelic)
 
 # node-openwhisk-newrelic
 
