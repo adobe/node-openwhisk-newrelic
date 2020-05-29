@@ -1,4 +1,15 @@
 /*
+ * Copyright 2020 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+/*
 Copyright 2020 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License. You may obtain a copy
@@ -184,7 +195,7 @@ describe("NewRelic", function() {
         it("sendMetrics - fail with 500 but not throw error", async function() {
             const failedMetricsNock = nock(MetricsTestHelper.MOCK_BASE_URL)
                 .post(MetricsTestHelper.MOCK_URL_PATH)
-                .reply(500)
+                .reply(500);
 
             const metrics = new NewRelic(FAKE_PARAMS);
             await metrics.send(EVENT_TYPE, { test: "value" });
@@ -293,7 +304,7 @@ describe("NewRelic", function() {
             added: "metric3",
             anotherAdded: "metric"
         }]);
-});
+    });
 
     it("get()", async function() {
 
@@ -383,7 +394,7 @@ describe("NewRelic", function() {
         it("timeout metrics disabled with options", async function() {
             const mustNotHappen = nock(MetricsTestHelper.MOCK_BASE_URL)
                 .post(MetricsTestHelper.MOCK_URL_PATH)
-                .reply(200)
+                .reply(200);
 
             process.env.__OW_DEADLINE = Date.now() + 100;
             new NewRelic( {  ...FAKE_PARAMS, disableActionTimeout: true });
@@ -394,7 +405,7 @@ describe("NewRelic", function() {
         it("timeout metrics disabled with environment variable", async function() {
             const mustNotHappen = nock(MetricsTestHelper.MOCK_BASE_URL)
                 .post(MetricsTestHelper.MOCK_URL_PATH)
-                .reply(200)
+                .reply(200);
 
             process.env.DISABLE_ACTION_TIMEOUT_METRIC = true;
 
@@ -464,7 +475,7 @@ describe("NewRelic", function() {
             const result = await wrappedMain({
                 key: "value"
             });
-            assert.equal(result.ok, true)
+            assert.equal(result.ok, true);
         });
     });
 
@@ -474,7 +485,7 @@ describe("NewRelic", function() {
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
 
             const metrics = new NewRelic( FAKE_PARAMS );
-            await fetch("http://example.com/test")
+            await fetch("http://example.com/test");
             await metrics.activationFinished();
 
             await MetricsTestHelper.metricsDone();
