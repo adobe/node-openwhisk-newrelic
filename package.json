@@ -1,6 +1,6 @@
 {
   "name": "@adobe/openwhisk-newrelic",
-  "description": "Library for gathering metrics for Apache OpenWhisk actions and sending them to NewRelic",
+  "description": "Library for gathering metrics for Apache OpenWhisk actions and sending them to NewRelic_ci settings change",
   "version": "1.0.1",
   "license": "Apache-2.0",
   "main": "index.js",
