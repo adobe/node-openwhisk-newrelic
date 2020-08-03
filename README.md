@@ -54,6 +54,12 @@ You MUST call `activationFinished()` to stop the agent when you are done sending
 metrics.activationFinished();
 ```
 
+To disable all sending of metrics to New Relic (for example in unit tests), set this environment variable:
+
+```
+OPENWHISK_NEWRELIC_DISABLE_METRICS=true
+```
+
 ### Instrumentation
 
 Supported instrumentation:
@@ -85,7 +91,7 @@ exports.main = NewRelic.instrument(main);
 To disable all instrumentation (for example in unit tests), set this environment variable:
 
 ```
-OPENWHISK_NEWRELIC_DISABLE_METRICS=true
+OPENWHISK_NEWRELIC_DISABLE_ALL_INSTRUMENTATION=true
 ```
 
 ### Action Timeout
