@@ -135,7 +135,6 @@ describe("NewRelic", function() {
             await metrics.send();
         });
 
-
         it("constructor should not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=true and no API key", async function () {
             process.env.OPENWHISK_NEWRELIC_DISABLE_METRICS = true;
             const metrics = new NewRelic();
