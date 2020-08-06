@@ -68,6 +68,7 @@ describe("NewRelic", function() {
         delete process.env.__OW_NAMESPACE;
         delete process.env.__OW_ACTIVATION_ID;
         delete process.env.__OW_DEADLINE;
+        delete process.env.OPENWHISK_NEWRELIC_DISABLE_METRICS;
 
         MetricsTestHelper.afterEachTest();
     });
@@ -130,6 +131,34 @@ describe("NewRelic", function() {
             };
 
             const metrics = new NewRelic(params);
+            assert.ok(metrics);
+            await metrics.send();
+        });
+
+        it("constructor should not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=true and no API key", async function () {
+            process.env.OPENWHISK_NEWRELIC_DISABLE_METRICS = true;
+            const metrics = new NewRelic();
+            assert.ok(metrics);
+            await metrics.send();
+        });
+
+        it("constructor should not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=true and API Key is provided", async function () {
+            process.env.OPENWHISK_NEWRELIC_DISABLE_METRICS = true;
+            const metrics = new NewRelic(FAKE_PARAMS);
+            assert.ok(metrics);
+            await metrics.send();
+        });
+
+        it("constructor should not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=false and no API key", async function () {
+            process.env.OPENWHISK_NEWRELIC_DISABLE_METRICS = false;
+            const metrics = new NewRelic();
+            assert.ok(metrics);
+            await metrics.send();
+        });
+
+        it("constructor should not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=false and API key is provided", async function () {
+            process.env.OPENWHISK_NEWRELIC_DISABLE_METRICS = false;
+            const metrics = new NewRelic(FAKE_PARAMS);
             assert.ok(metrics);
             await metrics.send();
         });
