@@ -61,7 +61,7 @@ describe("metrics", () => {
             });
             const containerMemorySize = Metrics.containerMemory().containerMemorySize;
             assert.ok(typeof containerMemorySize === "number");
-            assert.equal(containerMemorySize, '9999');
+            assert.equal(containerMemorySize, 9999);
         });
 
         it("should return container memory size added to existing metrics", () => {
@@ -74,8 +74,8 @@ describe("metrics", () => {
             });
             const metrics = Metrics.containerMemory({ test: 1 });
             assert.ok(typeof metrics.containerMemorySize === "number");
-            assert.equal(metrics.containerMemorySize, '9999');
-            assert.equal(metrics.test, '1');
+            assert.equal(metrics.containerMemorySize, 9999);
+            assert.equal(metrics.test, 1);
         });
 
         it("should overwrite existing container size metric", () => {
@@ -88,7 +88,7 @@ describe("metrics", () => {
             });
             const containerMemorySize = Metrics.containerMemory({ containerMemorySize: 1 }).containerMemorySize;
             assert.ok(typeof containerMemorySize === "number");
-            assert.equal(containerMemorySize, '9999');
+            assert.equal(containerMemorySize, 9999);
         });
 
         it("should return undefined if not running in the context of docker container", () => {
