@@ -25,7 +25,7 @@ jobs:
   include:
     - stage: Test
         script:
-            - npm version
+            - patch --version
             - npm test
     - stage: release
         if: branch = master
