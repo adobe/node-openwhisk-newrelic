@@ -39,6 +39,6 @@ jobs:
         condition:  $TRAVIS_OS_NAME == linux
         provider: script
         skip_cleanup: true
-        script: npx semantic-release --debu    
+        script: npx semantic-release --debug
 after_success:
   - npm run report-coverage
