@@ -150,14 +150,14 @@ describe("NewRelic", function() {
             await metrics.send();
         });
 
-        it("constructor should not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=false and no API key", async function () {
+        it("constructor should log but not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=false and no API key", async function () {
             process.env.OPENWHISK_NEWRELIC_DISABLE_METRICS = false;
             const metrics = new NewRelic();
             assert.ok(metrics);
             await metrics.send();
         });
 
-        it("constructor should not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=false and API key is provided", async function () {
+        it("constructor should log but not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=false and API key is provided", async function () {
             process.env.OPENWHISK_NEWRELIC_DISABLE_METRICS = false;
             const metrics = new NewRelic(FAKE_PARAMS);
             assert.ok(metrics);

@@ -59,7 +59,7 @@ describe("metrics", () => {
                     }
                 }
             });
-            const containerMemorySize = Metrics.containerMemory().containerMemorySize;
+            const containerMemorySize = Metrics.openwhisk().containerMemorySize;
             assert.ok(typeof containerMemorySize === "number");
             assert.equal(containerMemorySize, 9999);
         });
@@ -72,7 +72,7 @@ describe("metrics", () => {
                     }
                 }
             });
-            const metrics = Metrics.containerMemory({ test: 1 });
+            const metrics = Metrics.openwhisk({ test: 1 });
             assert.ok(typeof metrics.containerMemorySize === "number");
             assert.equal(metrics.containerMemorySize, 9999);
             assert.equal(metrics.test, 1);
@@ -86,13 +86,13 @@ describe("metrics", () => {
                     }
                 }
             });
-            const containerMemorySize = Metrics.containerMemory({ containerMemorySize: 1 }).containerMemorySize;
+            const containerMemorySize = Metrics.openwhisk({ containerMemorySize: 1 }).containerMemorySize;
             assert.ok(typeof containerMemorySize === "number");
             assert.equal(containerMemorySize, 9999);
         });
 
         it("should return undefined if not running in the context of docker container", () => {
-            const containerMemorySize = Metrics.containerMemory().containerMemorySize;
+            const containerMemorySize = Metrics.openwhisk().containerMemorySize;
             assert.equal(containerMemorySize, undefined);
         });
 
@@ -104,7 +104,7 @@ describe("metrics", () => {
                     }
                 }
             });
-            let containerMemorySize = Metrics.containerMemory().containerMemorySize;
+            let containerMemorySize = Metrics.openwhisk().containerMemorySize;
             assert.equal(containerMemorySize, undefined);
 
             mockFs({
@@ -116,7 +116,7 @@ describe("metrics", () => {
                     }
                 }
             });
-            containerMemorySize = Metrics.containerMemory().containerMemorySize;
+            containerMemorySize = Metrics.openwhisk().containerMemorySize;
             assert.equal(containerMemorySize, undefined);
         });
     });
