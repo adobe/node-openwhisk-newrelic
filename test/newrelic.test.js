@@ -32,6 +32,7 @@ const assert = require("assert");
 const nock = require('nock');
 const sleep = require('util').promisify(setTimeout);
 const fetch = require("node-fetch");
+const mockFs = require('mock-fs');
 
 const EVENT_TYPE = "myevent";
 
@@ -149,14 +150,14 @@ describe("NewRelic", function() {
             await metrics.send();
         });
 
-        it("constructor should not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=false and no API key", async function () {
+        it("constructor should log but not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=false and no API key", async function () {
             process.env.OPENWHISK_NEWRELIC_DISABLE_METRICS = false;
             const metrics = new NewRelic();
             assert.ok(metrics);
             await metrics.send();
         });
 
-        it("constructor should not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=false and API key is provided", async function () {
+        it("constructor should log but not throw error if OPENWHISK_NEWRELIC_DISABLE_METRICS=false and API key is provided", async function () {
             process.env.OPENWHISK_NEWRELIC_DISABLE_METRICS = false;
             const metrics = new NewRelic(FAKE_PARAMS);
             assert.ok(metrics);
@@ -179,6 +180,31 @@ describe("NewRelic", function() {
                 eventType: EVENT_TYPE,
                 test: "value"
             }]);
+        });
+
+        it("sendMetrics with container memory size in default metrics", async function() {
+            mockFs();
+            mockFs({
+                '/sys/fs/cgroup': {
+                    'memory': {
+                        'memory.limit_in_bytes': '9999'
+                    }
+                }
+            });
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
+
+            const metrics = new NewRelic(FAKE_PARAMS);
+            await metrics.send(EVENT_TYPE, { test: "value" });
+            await metrics.activationFinished();
+
+            await MetricsTestHelper.metricsDone();
+            MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
+                ...EXPECTED_METRICS,
+                containerMemorySize: 9999,
+                eventType: EVENT_TYPE,
+                test: "value"
+            }]);
+            mockFs.restore();
         });
 
         it("sendMetrics - default metrics frozen object", async function() {

@@ -155,6 +155,7 @@ Sent for all metrics.
 | `activationHost`  | string           | Hostname where the activation ran (`HOSTNAME` env var). |
 | `activationContainerName`  | string  | Container name where the activation ran (`MESOS_CONTAINER_NAME` env var). |
 | `nodeVersion`     | string           | Nodejs version on which the action ran, e.g. `13.12.0`. |
+| `containerMemorySize`  | number  | Container memory size found in `/sys/fs/cgroup/memory/memory.limit_in_bytes`|
 
 ### Http
 

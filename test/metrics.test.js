@@ -30,6 +30,7 @@ const assert = require("assert");
 const fs = require("fs-extra");
 const Metrics = require('../lib/metrics');
 const process = require("process");
+const mockFs = require('mock-fs');
 
 describe("metrics", () => {
 
@@ -38,6 +39,85 @@ describe("metrics", () => {
         it("timestamp", () => {
             const timestamp = Metrics.timestamp();
             assert.ok(typeof timestamp === "number");
+        });
+    });
+
+    describe("container memory size", () => {
+        beforeEach( () => {
+            mockFs();
+        });
+
+        afterEach(() => {
+            mockFs.restore();
+        });
+
+        it("should return container memory size", () => {
+            mockFs({
+                '/sys/fs/cgroup': {
+                    'memory': {
+                        'memory.limit_in_bytes': '9999'
+                    }
+                }
+            });
+            const containerMemorySize = Metrics.openwhisk().containerMemorySize;
+            assert.ok(typeof containerMemorySize === "number");
+            assert.equal(containerMemorySize, 9999);
+        });
+
+        it("should return container memory size added to existing metrics", () => {
+            mockFs({
+                '/sys/fs/cgroup': {
+                    'memory': {
+                        'memory.limit_in_bytes': '9999'
+                    }
+                }
+            });
+            const metrics = Metrics.openwhisk({ test: 1 });
+            assert.ok(typeof metrics.containerMemorySize === "number");
+            assert.equal(metrics.containerMemorySize, 9999);
+            assert.equal(metrics.test, 1);
+        });
+
+        it("should overwrite existing container size metric", () => {
+            mockFs({
+                '/sys/fs/cgroup': {
+                    'memory': {
+                        'memory.limit_in_bytes': '9999'
+                    }
+                }
+            });
+            const containerMemorySize = Metrics.openwhisk({ containerMemorySize: 1 }).containerMemorySize;
+            assert.ok(typeof containerMemorySize === "number");
+            assert.equal(containerMemorySize, 9999);
+        });
+
+        it("should return undefined if not running in the context of docker container", () => {
+            const containerMemorySize = Metrics.openwhisk().containerMemorySize;
+            assert.equal(containerMemorySize, undefined);
+        });
+
+        it("should return undefined if the file is malformed", () => {
+            mockFs({
+                '/sys/fs/cgroup': {
+                    'memory': {
+                        'memory.limit_in_bytes': 'ksekfgfbnsy'
+                    }
+                }
+            });
+            let containerMemorySize = Metrics.openwhisk().containerMemorySize;
+            assert.equal(containerMemorySize, undefined);
+
+            mockFs({
+                '/sys/fs/cgroup': {
+                    'memory': {
+                        'memory.limit_in_bytes': {
+                            'hello': '1'
+                        }
+                    }
+                }
+            });
+            containerMemorySize = Metrics.openwhisk().containerMemorySize;
+            assert.equal(containerMemorySize, undefined);
         });
     });
 
