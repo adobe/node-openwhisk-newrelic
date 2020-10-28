@@ -42,3 +42,6 @@ jobs:
         script: npx semantic-release --debug
 after_success:
   - npm run report-coverage
+
+after_script:
+  - npx @adobe/sizewatcher
