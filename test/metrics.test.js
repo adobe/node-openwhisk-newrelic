@@ -32,7 +32,7 @@ const Metrics = require('../lib/metrics');
 const process = require("process");
 const mockFs = require('mock-fs');
 
-describe("metrics", () => {
+describe("metrics.js", () => {
 
     describe("timestamps", () => {
 

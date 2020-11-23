@@ -49,7 +49,7 @@ const EXPECTED_METRICS = Object.freeze({
     timestamp: /\d+/
 });
 
-describe("NewRelic", function() {
+describe("newrelic.js", function() {
 
     beforeEach(function() {
         process.env.__OW_ACTION_NAME = "/namespace/package/action";
