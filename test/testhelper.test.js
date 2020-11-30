@@ -55,7 +55,7 @@ function assertAssertionFails(cb, message) {
     assert.throws(cb, assert.AssertionError, message);
 }
 
-describe("MetricsTestHelper", function() {
+describe("testhelper.js", function() {
 
     describe("assertObjectMatches", function() {
 
