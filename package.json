@@ -49,7 +49,8 @@
     "test-node-fetch": "cd node-fetch && npm test -- --file ../util/node-fetch.setup.js && pwd",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "posttest": "eslint ./ && license-checker --summary",
-    "beautify": "eslint ./ --fix"
+    "beautify": "eslint ./ --fix",
+    "semantic-release": "semantic-release"
   },
   "mocha": {
     "file": "test/logfile.setup.js"
