@@ -21,7 +21,12 @@ Reference: <https://docs.newrelic.com/docs/insights/insights-data-sources/custom
 
 ## Usage
 
-Initialize the New Relic Metrics agent. This will start a `setTimeout` that will send metrics if your action is close to timeout using `__OW_DEADLINE`
+From New Relic you will need:
+- your account number
+- your New Relic Insights API key (note the "Insights" here, it's separate from a plain NR api key)
+
+Initialize the New Relic Metrics agent with those values.
+You typically want to do that right when your action starts in order to get action timeout metrics or support automatic instrumentation (see below).
 
 ```javascript
 const { NewRelic } = require('@adobe/openwhisk-newrelic');
@@ -31,7 +36,7 @@ const metrics = new NewRelic({
 });
 ```
 
-Collect all your custom/background metrics in a separate object
+Then collect all your custom/background metrics in a separate object
 
 ```javascript
 const customMetrics = {
@@ -40,13 +45,15 @@ const customMetrics = {
 }
 ```
 
-Send your metrics to New Relic
+Send your metrics to New Relic:
 
 ```javascript
 await metrics.send('EVENT_TYPE', customMetrics);
 ```
 
 Note that metrics are not sent immediately but are collected in the background and sent in intervals every 10 seconds by default. This can be configured via `sendIntervalMs` in the options of the constructor (in milliseconds).
+
+Also note that `new NewRelic()` will start a `setTimeout` that will send metrics if your action is close to timeout using `__OW_DEADLINE`.
 
 You MUST call `activationFinished()` to stop the agent when you are done sending metrics, or when your action is finishing. This will clear the action timeout that began when the class instance was defined.
 
