@@ -24,7 +24,7 @@ Reference: <https://docs.newrelic.com/docs/insights/insights-data-sources/custom
 Initialize the New Relic Metrics agent. This will start a `setTimeout` that will send metrics if your action is close to timeout using `__OW_DEADLINE`
 
 ```javascript
-const NewRelic = require('@adobe/node-openwhisk-newrelic');
+const { NewRelic } = require('@adobe/openwhisk-newrelic');
 const metrics = new NewRelic({
     newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
     newRelicApiKey: 'YOUR_API_KEY',
