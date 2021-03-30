@@ -22,7 +22,7 @@ Reference: <https://docs.newrelic.com/docs/insights/insights-data-sources/custom
 ## Usage
 
 From New Relic you will need:
-- your account number
+- your account id
 - your New Relic Insights API key (note the "Insights" here, it's separate from a plain NR api key)
 
 Initialize the New Relic Metrics agent with those values.
@@ -32,7 +32,7 @@ You typically want to do that right when your action starts in order to get acti
 const { NewRelic } = require('@adobe/openwhisk-newrelic');
 const metrics = new NewRelic({
     newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
-    newRelicApiKey: 'YOUR_API_KEY',
+    newRelicApiKey: 'YOUR_INSIGHTS_API_KEY'
 });
 ```
 
@@ -83,7 +83,7 @@ To enable instrumentation, wrap the action main function in `NewRelic.instrument
 async function main(params) {
     const metrics = new NewRelic({
         newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
-        newRelicApiKey: 'YOUR_API_KEY',
+        newRelicApiKey: 'YOUR_INSIGHTS_API_KEY'
     });
     try {
         // do something
@@ -112,7 +112,7 @@ In case you want to opt out of the action timeout, (example: unit tests) there a
    ```javascript
    const metrics = new NewRelic({
        newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
-       newRelicApiKey: 'YOUR_API_KEY',
+       newRelicApiKey: 'YOUR_INSIGHTS_API_KEY',
        disableActionTimeout: true
    });
    ```
@@ -131,7 +131,7 @@ In case you want to pass custom metrics to the action timeout, you can define a 
 ```javascript
 const metrics = new NewRelic({
     newRelicEventsURL: 'https://insights-collector.newrelic.com/v1/accounts/<YOUR_ACOUNT_ID>/events',
-    newRelicApiKey: 'YOUR_API_KEY',
+    newRelicApiKey: 'YOUR_INSIGHTS_API_KEY',
     actionTimeoutMetricsCb: function () {
         return {
             eventType: 'error',
