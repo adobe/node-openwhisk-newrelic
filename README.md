@@ -153,9 +153,6 @@ Sent for all metrics.
 | `package`         | string           | OpenWhisk package name of the action that sent the event.  |
 | `actionName`      | string           | OpenWhisk action name (without package) of the action that sent the event. |
 | `activationId`    | string           | OpenWhisk activation id of the action that sent the event. |
-| `appName`         | string           | Name of the invoking IO console integration (API key label) |
-| `clientId`        | string           | API key = IMS client id of the invoking technical account/integration/client. |
-| `sourceName`      | string           | Filename of the source. |
 | `cloud`           | string           | Cloud in which the activation ran, e.g. `aws` or `azure` (`__OW_CLOUD`). |
 | `region`          | string           | Region in which the activation ran, e.g. `us-east-1` (`__OW_REGION`). |
 | `transactionId`   | string           | OpenWhisk transaction id (`__OW_TRANSACTION_ID`). |
