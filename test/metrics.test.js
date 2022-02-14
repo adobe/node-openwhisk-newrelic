@@ -200,6 +200,13 @@ describe("metrics.js", () => {
             const flatten = Metrics.flatten({ value: "1" });
             assert.deepStrictEqual(flatten, { value: "1" });
         });
+
+        it("truncates long strings", () => {
+            const longValue = "_".repeat(Metrics.DEFAULT_MAX_STRING_LENGTH + 100);            
+            const flatten = Metrics.flatten({value : longValue});
+            assert(flatten.value.length === Metrics.DEFAULT_MAX_STRING_LENGTH);
+        });
+
         it("boolean", () => {
             const flatten = Metrics.flatten({ value1: true, value2: false });
             assert.deepStrictEqual(flatten, { value1: 1, value2: 0 });
