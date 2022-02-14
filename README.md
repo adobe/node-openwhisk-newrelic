@@ -15,7 +15,7 @@ Reference: <https://docs.newrelic.com/docs/insights/insights-data-sources/custom
 * Limits:
   * 255 attributes
   * 255 characters in the attribute name
-  * 4KB max length attribute value
+  * 100 character length limit of individual string values (NR supports 4k but this library will truncate long strings automatically.)
   * 100,000 HTTP POST requests/min, 429 status after, counter reset of 1 minute window
 
 
