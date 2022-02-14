@@ -202,7 +202,7 @@ describe("metrics.js", () => {
         });
 
         it("truncates long strings", () => {
-            const longValue = "_".repeat(Metrics.DEFAULT_MAX_STRING_LENGTH + 100);            
+            const longValue = "!".repeat(Metrics.DEFAULT_MAX_STRING_LENGTH + 100);            
             const flatten = Metrics.flatten({value : longValue});
             assert(flatten.value.length === Metrics.DEFAULT_MAX_STRING_LENGTH);
         });
