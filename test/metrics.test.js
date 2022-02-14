@@ -16,9 +16,10 @@
 
 "use strict";
 
+const rewire = require("rewire");
 const assert = require("assert");
 const fs = require("fs-extra");
-const Metrics = require('../lib/metrics');
+const Metrics = rewire("../lib/metrics");
 const process = require("process");
 const mockFs = require('mock-fs');
 
@@ -202,9 +203,11 @@ describe("metrics.js", () => {
         });
 
         it("truncates long strings", () => {
-            const longValue = "!".repeat(Metrics.DEFAULT_MAX_STRING_LENGTH + 100);            
+            const maxLength = Metrics.__get__("DEFAULT_MAX_STRING_LENGTH");
+            assert(maxLength > 0, "Should provide some kind of default max length");
+            const longValue = "!".repeat(maxLength + 100);            
             const flatten = Metrics.flatten({value : longValue});
-            assert(flatten.value.length === Metrics.DEFAULT_MAX_STRING_LENGTH);
+            assert(flatten.value.length === maxLength);
         });
 
         it("boolean", () => {
