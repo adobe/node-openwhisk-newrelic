@@ -18,7 +18,6 @@ Reference: <https://docs.newrelic.com/docs/insights/insights-data-sources/custom
   * 4KB max length attribute value
   * 100,000 HTTP POST requests/min, 429 status after, counter reset of 1 minute window
 
-
 ## Usage
 
 From New Relic you will need:
