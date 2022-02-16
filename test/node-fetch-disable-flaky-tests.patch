@@ -1,7 +1,7 @@
-diff --git a/test/main.js b/test/main.js
+diff --git a/test/test.js b/test/test.js
 index cdeb51f..1e08d36 100644
---- a/test/main.js
-+++ b/test/main.js
+--- a/test/test.js
++++ b/test/test.js
 @@ -552,7 +552,7 @@ describe('node-fetch', () => {
  			.and.have.property('code', 'ECONNRESET');
  	});
