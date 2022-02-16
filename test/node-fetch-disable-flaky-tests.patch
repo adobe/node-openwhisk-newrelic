@@ -1,13 +1,22 @@
-diff --git a/test/main.js b/test/main.js
-index 4f6134b..6475f40 100644
---- a/test/main.js
-+++ b/test/main.js
-@@ -850,7 +850,7 @@ describe('node-fetch', () => {
+diff --git a/test/test.js b/test/test.js
+index cdeb51f..1e08d36 100644
+--- a/test/test.js
++++ b/test/test.js
+@@ -552,7 +552,7 @@ describe('node-fetch', () => {
+ 			.and.have.property('code', 'ECONNRESET');
+ 	});
+ 
+-	it('should handle DNS-error response', function() {
++	it.skip('should handle DNS-error response', function() {
+ 		const url = 'http://domain.invalid';
+ 		return expect(fetch(url)).to.eventually.be.rejected
+ 			.and.be.an.instanceOf(FetchError)
+@@ -798,7 +798,7 @@ describe('node-fetch', () => {
  			.and.have.property('type', 'request-timeout');
  	});
  
--	it('should allow custom timeout on response body', () => {
-+	it.skip('should allow custom timeout on response body', () => {
+-	it('should allow custom timeout on response body', function() {
++	it.skip('should allow custom timeout on response body', function() {
  		const url = `${base}slow`;
- 		const options = {
+ 		const opts = {
  			timeout: 20
