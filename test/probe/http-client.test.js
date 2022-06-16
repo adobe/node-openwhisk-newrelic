@@ -822,10 +822,10 @@ describe("probe http-client", function() {
 
     describe("chunked encoding", function() {
         let realServer;
+        const port = 8000; //server.getHttpPort() + 1;
+        const expectedText = 'first line\nsecond line\nthird line\n';
 
-        it("should not fail", async function() {
-            const port = 8000; //server.getHttpPort() + 1;
-
+        before("create server", function () {
             realServer = http.createServer((req, res) => {
                 res.setHeader('Content-Type', 'text/html; charset=UTF-8');
                 res.setHeader('Transfer-Encoding', 'chunked');
@@ -837,17 +837,49 @@ describe("probe http-client", function() {
             });
 
             realServer.listen(port);
+        });
 
+        it("node fetch", async function() {
             const fetchResponse = await fetch(`http://localhost:${port}`);
             const fetchResponseText = await fetchResponse.text();
 
+            assert.strictEqual(fetchResponseText, expectedText);
+        });
+
+        it("axios", async function() {
             const axiosResponse = await axios(`http://localhost:${port}`);
             const axiosResponseText = axiosResponse.data;
 
-            const expectedText = 'first line\nsecond line\nthird line\n';
-
-            assert.strictEqual(fetchResponseText, expectedText);
             assert.strictEqual(axiosResponseText, expectedText);
+        });
+
+        it("node http", async function () {
+            const options = {
+                host: 'localhost',
+                path: '/',
+                port
+            };
+
+            const nodeResponseText = await new Promise((resolve, reject) => {
+                http.request(options, (res) => {
+                    let responseBody = '';
+
+                    res.setEncoding('utf8');
+                    res.on('data', (chunk) => {
+                        responseBody += chunk;
+                    });
+
+                    res.on('end', () => {
+                        resolve(responseBody);
+                    });
+
+                    res.on('error', (err) => {
+                        reject(err);
+                    });
+                }).end();
+            });
+
+            assert.strictEqual(nodeResponseText, expectedText);
         });
 
         after("tear down", function () {
