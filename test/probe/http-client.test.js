@@ -819,4 +819,39 @@ describe("probe http-client", function() {
             assert.strictEqual(this.metrics, undefined);
         });
     });
+
+    describe("chunked encoding", function() {
+        let realServer;
+
+        it("should not fail", async function() {
+            const port = 8000; //server.getHttpPort() + 1;
+
+            realServer = http.createServer((req, res) => {
+                res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+                res.setHeader('Transfer-Encoding', 'chunked');
+
+                res.write("first line\n");
+                res.write("second line\n");
+                res.write("third line\n");
+                res.end();
+            });
+
+            realServer.listen(port);
+
+            const fetchResponse = await fetch(`http://localhost:${port}`);
+            const fetchResponseText = await fetchResponse.text();
+
+            const axiosResponse = await axios(`http://localhost:${port}`);
+            const axiosResponseText = axiosResponse.data;
+
+            const expectedText = 'first line\nsecond line\nthird line\n';
+
+            assert.strictEqual(fetchResponseText, expectedText);
+            assert.strictEqual(axiosResponseText, expectedText);
+        });
+
+        after("tear down", function () {
+            realServer.close();
+        });
+    });
 });
