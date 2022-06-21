@@ -238,11 +238,24 @@ describe("metrics.js", () => {
                 nonErrorMessage: longValue
             };
             const flatten = Metrics.flatten({ nested });
-
             // applies error metric max length
             assert(flatten.nested_errorMessage.length === maxErrorLength);
             // applies normal string max length
             assert(flatten.nested_nonErrorMessage.length === maxLength);
+        });
+
+        it("truncates error metrics to length set in env variable", () => {
+            process.env.NEW_RELIC_ERROR_METRIC_MAX_STRING_LENGTH = 1200;
+            // rewire Metrics after env variable set
+            const MetricsWithEnvVar = rewire("../lib/metrics");
+            const maxErrorLength = MetricsWithEnvVar.__get__("DEFAULT_ERROR_METRIC_MAX_STRING_LENGTH");
+            const longValue = "!".repeat(maxErrorLength + 100);
+
+            const flatten = MetricsWithEnvVar.flatten({
+                message: longValue
+            });
+            // applies error metric max length
+            assert(flatten.message.length === 1200);
         });
 
         it("boolean", () => {
