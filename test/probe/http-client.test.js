@@ -29,6 +29,7 @@ const pem = require('pem').promisified;
 const { Readable } = require('stream');
 const fs = require('fs').promises;
 const mockFs = require('mock-fs');
+const { createDefaultHttpClient, createHttpHeaders, createPipelineRequest } = require('@azure/core-rest-pipeline');
 
 // http frameworks tested
 const fetch = require('node-fetch');
@@ -880,6 +881,22 @@ describe("probe http-client", function() {
             });
 
             assert.strictEqual(nodeResponseText, expectedText);
+        });
+
+        it("azure sdk http client", async function () {
+            const httpClient = createDefaultHttpClient();
+
+            const response = await httpClient.sendRequest(createPipelineRequest({
+                url: `http://localhost:${port}`,
+                method: "GET",
+                headers: createHttpHeaders({}),
+                timeout: 500,
+                allowInsecureConnection: true
+            }));
+
+            const azureSDKResponseText = response.bodyAsText;
+
+            assert.strictEqual(azureSDKResponseText, expectedText);
         });
 
         after("tear down", function () {
