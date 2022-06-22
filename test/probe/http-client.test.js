@@ -443,7 +443,9 @@ describe("probe http-client", function() {
 
         it("fetch http GET - parse domain", async function() {
             const TEST_PATH = "/test";
-            nock(`http://${TEST_HOST_NOCK}`).get(TEST_PATH).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
+            nock(`http://${TEST_HOST_NOCK}`)
+                .get(TEST_PATH)
+                .reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID, "content-length": 11});
 
             const response = await fetch(`http://${TEST_HOST_NOCK}${TEST_PATH}`);
             await assertFetchResponse(response);
@@ -493,7 +495,9 @@ describe("probe http-client", function() {
 
         it("fetch http GET with default port", async function() {
             const TEST_PATH = "/test";
-            nock(`http://${TEST_HOST_NOCK}`).get(TEST_PATH).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
+            nock(`http://${TEST_HOST_NOCK}`)
+                .get(TEST_PATH)
+                .reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID, "content-length": 11});
 
             const response = await fetch(`http://${TEST_HOST_NOCK}${TEST_PATH}`);
             await assertFetchResponse(response);
@@ -505,7 +509,9 @@ describe("probe http-client", function() {
 
         it("fetch https GET with default port", async function() {
             const TEST_PATH = "/test";
-            nock(`https://${TEST_HOST_NOCK}`).get(TEST_PATH).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
+            nock(`https://${TEST_HOST_NOCK}`)
+                .get(TEST_PATH)
+                .reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID, "content-length": 11});
 
             const response = await fetch(`https://${TEST_HOST_NOCK}${TEST_PATH}`);
             await assertFetchResponse(response);
@@ -513,27 +519,6 @@ describe("probe http-client", function() {
             assertMetricsNock(this.metrics, {
                 protocol: "https",
                 path: TEST_PATH
-            });
-        });
-
-        it("fetch http GET no content-length header", async function() {
-            const TEST_PATH_NO_CONTENT_LENGTH = "/nocontentlength";
-            server.on({
-                method: "GET",
-                path: TEST_PATH_NO_CONTENT_LENGTH,
-                reply: {
-                    status:  200,
-                    headers: { "x-request-id": TEST_REQUEST_ID },
-                    headersOverrides: { "content-length": undefined },
-                    body:    JSON.stringify({ok: true})
-                }
-            });
-
-            const response = await fetch(`http://${getHost()}${TEST_PATH_NO_CONTENT_LENGTH}`);
-            await assertFetchResponse(response);
-
-            assertMetrics(this.metrics, {
-                path: TEST_PATH_NO_CONTENT_LENGTH
             });
         });
 
