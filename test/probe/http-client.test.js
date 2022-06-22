@@ -29,6 +29,7 @@ const pem = require('pem').promisified;
 const { Readable } = require('stream');
 const fs = require('fs').promises;
 const mockFs = require('mock-fs');
+const { createDefaultHttpClient, createHttpHeaders, createPipelineRequest } = require('@azure/core-rest-pipeline');
 
 // http frameworks tested
 const fetch = require('node-fetch');
@@ -442,7 +443,9 @@ describe("probe http-client", function() {
 
         it("fetch http GET - parse domain", async function() {
             const TEST_PATH = "/test";
-            nock(`http://${TEST_HOST_NOCK}`).get(TEST_PATH).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
+            nock(`http://${TEST_HOST_NOCK}`)
+                .get(TEST_PATH)
+                .reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID, "content-length": 11});
 
             const response = await fetch(`http://${TEST_HOST_NOCK}${TEST_PATH}`);
             await assertFetchResponse(response);
@@ -492,7 +495,9 @@ describe("probe http-client", function() {
 
         it("fetch http GET with default port", async function() {
             const TEST_PATH = "/test";
-            nock(`http://${TEST_HOST_NOCK}`).get(TEST_PATH).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
+            nock(`http://${TEST_HOST_NOCK}`)
+                .get(TEST_PATH)
+                .reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID, "content-length": 11});
 
             const response = await fetch(`http://${TEST_HOST_NOCK}${TEST_PATH}`);
             await assertFetchResponse(response);
@@ -504,7 +509,9 @@ describe("probe http-client", function() {
 
         it("fetch https GET with default port", async function() {
             const TEST_PATH = "/test";
-            nock(`https://${TEST_HOST_NOCK}`).get(TEST_PATH).reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID});
+            nock(`https://${TEST_HOST_NOCK}`)
+                .get(TEST_PATH)
+                .reply(200, {ok: true}, {"x-request-id": TEST_REQUEST_ID, "content-length": 11});
 
             const response = await fetch(`https://${TEST_HOST_NOCK}${TEST_PATH}`);
             await assertFetchResponse(response);
@@ -512,27 +519,6 @@ describe("probe http-client", function() {
             assertMetricsNock(this.metrics, {
                 protocol: "https",
                 path: TEST_PATH
-            });
-        });
-
-        it("fetch http GET no content-length header", async function() {
-            const TEST_PATH_NO_CONTENT_LENGTH = "/nocontentlength";
-            server.on({
-                method: "GET",
-                path: TEST_PATH_NO_CONTENT_LENGTH,
-                reply: {
-                    status:  200,
-                    headers: { "x-request-id": TEST_REQUEST_ID },
-                    headersOverrides: { "content-length": undefined },
-                    body:    JSON.stringify({ok: true})
-                }
-            });
-
-            const response = await fetch(`http://${getHost()}${TEST_PATH_NO_CONTENT_LENGTH}`);
-            await assertFetchResponse(response);
-
-            assertMetrics(this.metrics, {
-                path: TEST_PATH_NO_CONTENT_LENGTH
             });
         });
 
@@ -817,6 +803,89 @@ describe("probe http-client", function() {
             await response.json();
 
             assert.strictEqual(this.metrics, undefined);
+        });
+    });
+
+    describe("chunked encoding", function() {
+        let realServer;
+        const port = 8000; //server.getHttpPort() + 1;
+        const expectedText = 'first line\nsecond line\nthird line\n';
+
+        before("create server", function () {
+            realServer = http.createServer((req, res) => {
+                res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+                res.setHeader('Transfer-Encoding', 'chunked');
+
+                res.write("first line\n");
+                res.write("second line\n");
+                res.write("third line\n");
+                res.end();
+            });
+
+            realServer.listen(port);
+        });
+
+        it("node fetch", async function() {
+            const fetchResponse = await fetch(`http://localhost:${port}`);
+            const fetchResponseText = await fetchResponse.text();
+
+            assert.strictEqual(fetchResponseText, expectedText);
+        });
+
+        it("axios", async function() {
+            const axiosResponse = await axios(`http://localhost:${port}`);
+            const axiosResponseText = axiosResponse.data;
+
+            assert.strictEqual(axiosResponseText, expectedText);
+        });
+
+        it("node http", async function () {
+            const options = {
+                host: 'localhost',
+                path: '/',
+                port
+            };
+
+            const nodeResponseText = await new Promise((resolve, reject) => {
+                http.request(options, (res) => {
+                    let responseBody = '';
+
+                    res.setEncoding('utf8');
+                    res.on('data', (chunk) => {
+                        responseBody += chunk;
+                    });
+
+                    res.on('end', () => {
+                        resolve(responseBody);
+                    });
+
+                    res.on('error', (err) => {
+                        reject(err);
+                    });
+                }).end();
+            });
+
+            assert.strictEqual(nodeResponseText, expectedText);
+        });
+
+        it("azure sdk http client", async function () {
+            const httpClient = createDefaultHttpClient();
+
+            const response = await httpClient.sendRequest(createPipelineRequest({
+                url: `http://localhost:${port}`,
+                method: "GET",
+                headers: createHttpHeaders({}),
+                timeout: 500,
+                allowInsecureConnection: true
+            }));
+
+            const azureSDKResponseText = response.bodyAsText;
+
+            assert.strictEqual(azureSDKResponseText, expectedText);
+        });
+
+        after("tear down", function () {
+            realServer.close();
         });
     });
 });
