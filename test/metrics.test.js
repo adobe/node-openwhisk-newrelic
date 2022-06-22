@@ -210,6 +210,54 @@ describe("metrics.js", () => {
             assert(flatten.value.length === maxLength);
         });
 
+        it("truncates long error metric strings to configured length", () => {
+            const maxLength = Metrics.__get__("DEFAULT_MAX_STRING_LENGTH");
+            const maxErrorLength = Metrics.__get__("DEFAULT_ERROR_METRIC_MAX_STRING_LENGTH");
+            const longValue = "!".repeat(maxErrorLength + maxLength + 100);
+            const flatten = Metrics.flatten({
+                message: longValue,
+                errorMessage: longValue,
+                error: longValue,
+                nonErrorMessage: longValue,
+            });
+            // applies error metric max length
+            assert(flatten.message.length === maxErrorLength);
+            assert(flatten.errorMessage.length === maxErrorLength);
+            assert(flatten.error.length === maxErrorLength);
+            // applies normal string max length
+            assert(flatten.nonErrorMessage.length === maxLength);
+        });
+
+        it("truncates error metrics on nested object to configured length", () => {
+            const maxLength = Metrics.__get__("DEFAULT_MAX_STRING_LENGTH");
+            const maxErrorLength = Metrics.__get__("DEFAULT_ERROR_METRIC_MAX_STRING_LENGTH");
+            const longValue = "!".repeat(maxErrorLength + maxLength + 100);
+
+            const nested = {
+                errorMessage: longValue,
+                nonErrorMessage: longValue
+            };
+            const flatten = Metrics.flatten({ nested });
+            // applies error metric max length
+            assert(flatten.nested_errorMessage.length === maxErrorLength);
+            // applies normal string max length
+            assert(flatten.nested_nonErrorMessage.length === maxLength);
+        });
+
+        it("truncates error metrics to length set in env variable", () => {
+            process.env.NEW_RELIC_ERROR_METRIC_MAX_STRING_LENGTH = 1200;
+            // rewire Metrics after env variable set
+            const MetricsWithEnvVar = rewire("../lib/metrics");
+            const maxErrorLength = MetricsWithEnvVar.__get__("DEFAULT_ERROR_METRIC_MAX_STRING_LENGTH");
+            const longValue = "!".repeat(maxErrorLength + 100);
+
+            const flatten = MetricsWithEnvVar.flatten({
+                message: longValue
+            });
+            // applies error metric max length
+            assert(flatten.message.length === 1200);
+        });
+
         it("boolean", () => {
             const flatten = Metrics.flatten({ value1: true, value2: false });
             assert.deepStrictEqual(flatten, { value1: 1, value2: 0 });
