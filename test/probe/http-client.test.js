@@ -38,6 +38,7 @@ const http = require('http');
 const https = require('https');
 const needle = require('needle');
 const { downloadFile, uploadFile } = require('@adobe/httptransfer');
+const { createDefaultHttpClient, createHttpHeaders, createPipelineRequest } = require('@azure/core-rest-pipeline');
 
 // for tests using mock-http-server which is a real local webserver
 // that  can only run on "localhost"
@@ -817,6 +818,46 @@ describe("probe http-client", function() {
             await response.json();
 
             assert.strictEqual(this.metrics, undefined);
+        });
+    });
+
+    describe("chunked encoding", function() {
+        let realServer;
+        const port = 8000; //server.getHttpPort() + 1;
+        const expectedText = 'first line\nsecond line\nthird line\n';
+
+        before("create server", function () {
+            realServer = http.createServer((req, res) => {
+                res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+                res.setHeader('Transfer-Encoding', 'chunked');
+
+                res.write("first line\n");
+                res.write("second line\n");
+                res.write("third line\n");
+                res.end();
+            });
+
+            realServer.listen(port);
+        });
+
+        it("azure sdk http client", async function () {
+            const httpClient = createDefaultHttpClient();
+
+            const response = await httpClient.sendRequest(createPipelineRequest({
+                url: `http://localhost:${port}`,
+                method: "GET",
+                headers: createHttpHeaders({}),
+                timeout: 500,
+                allowInsecureConnection: true
+            }));
+
+            const azureSDKResponseText = response.bodyAsText;
+
+            assert.strictEqual(azureSDKResponseText, expectedText);
+        });
+
+        after("tear down", function () {
+            realServer.close();
         });
     });
 });
