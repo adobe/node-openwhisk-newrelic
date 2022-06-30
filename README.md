@@ -16,6 +16,7 @@ Reference: <https://docs.newrelic.com/docs/insights/insights-data-sources/custom
   * 255 attributes
   * 255 characters in the attribute name
   * 100 character length limit of individual string values (NR supports 4k but this library will truncate long strings automatically and add an ellipsis.)
+  * 1500 character length for error metric strings by default, or configurable by setting the `NEW_RELIC_ERROR_METRIC_MAX_STRING_LENGTH` environment variable
   * 100,000 HTTP POST requests/min, 429 status after, counter reset of 1 minute window
 
 

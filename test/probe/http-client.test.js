@@ -38,6 +38,7 @@ const http = require('http');
 const https = require('https');
 const needle = require('needle');
 const { downloadFile, uploadFile } = require('@adobe/httptransfer');
+const { createDefaultHttpClient, createPipelineRequest } = require('@azure/core-rest-pipeline');
 
 // for tests using mock-http-server which is a real local webserver
 // that  can only run on "localhost"
@@ -82,9 +83,11 @@ function doAssertMetrics(metrics, opts) {
     assert.strictEqual(metrics.method, opts.method || "GET");
     assert.strictEqual(metrics.path, path);
     assert.strictEqual(metrics.url, opts.url || url);
-    assert.strictEqual(metrics.contentType, "application/json");
+    assert.strictEqual(metrics.contentType, opts.contentType || "application/json");
     if (!opts.ignoreServerIPAddress) {
-        assert.strictEqual(metrics.serverIPAddress, "127.0.0.1");
+        if (!["127.0.0.1","::1"].includes(metrics.serverIPAddress)) {
+            assert.fail("IP address not 127.0.0.1 or ::1");
+        }
     }
     if (opts.requestBodySize !== undefined) {
         assert.strictEqual(metrics.requestBodySize, opts.requestBodySize);
@@ -156,6 +159,40 @@ function assertErrorMetricsNock(metrics, opts) {
 
     assert.ok(Number.isFinite(metrics.duration));
     assert.ok(metrics.duration >= 0);
+}
+
+const TEST_CONTENT_CHUNKED_RESPONSE = "first line\nsecond line\nthird line\n";
+
+function nockChunkedResponse(path) {
+    // streaming, chunked response with no content-length header
+    nock(`http://${TEST_HOST_NOCK}`)
+        .get(path)
+        .reply(() => {
+            const stream = new Readable();
+            TEST_CONTENT_CHUNKED_RESPONSE.split("\n").forEach((str) => {
+                if (str.length > 0) {
+                    stream.push(`${str}\n`);
+                }
+            });
+            stream.push(null);
+
+            return [200, stream, {
+                "Content-Type": "text/plain",
+                "Transfer-Encoding": "chunked"
+            }];
+        });
+}
+
+function assertChunkedResponseMetrics(metrics, path, responseText) {
+    // body written above in nockChunkedEncoding()
+    assert.strictEqual(responseText, TEST_CONTENT_CHUNKED_RESPONSE);
+
+    assertMetricsNock(metrics, {
+        path: path,
+        contentType: "text/plain",
+        responseBodySize: TEST_CONTENT_CHUNKED_RESPONSE.length,
+        ignoreServerRequestId: true
+    });
 }
 
 describe("probe http-client", function() {
@@ -245,13 +282,17 @@ describe("probe http-client", function() {
                         });
 
                         res.on('end', () => {
-                            let body = {};
-                            try {
-                                body = JSON.parse(responseBody);
-                            } catch(e) {
-                                console.log("Ignoring error:", e);
+                            if (res.headers["content-type"] === "application/json") {
+                                let body = {};
+                                try {
+                                    body = JSON.parse(responseBody);
+                                } catch(e) {
+                                    console.log("Ignoring error:", e);
+                                }
+                                resolve(body);
+                            } else {
+                                resolve(responseBody);
                             }
-                            resolve(body);
                         });
                     }
                 });
@@ -404,6 +445,15 @@ describe("probe http-client", function() {
                 requestBodySize: BIG_CONTENT.length
             });
         });
+
+        it("node http GET no content-length header", async function() {
+            const TEST_PATH = "/nocontentlength";
+            nockChunkedResponse(TEST_PATH);
+
+            const responseText = await httpRequest(http, `http://${TEST_HOST_NOCK}${TEST_PATH}`);
+
+            assertChunkedResponseMetrics(this.metrics, TEST_PATH, responseText);
+        });
     });
 
     describe("fetch", function() {
@@ -516,24 +566,13 @@ describe("probe http-client", function() {
         });
 
         it("fetch http GET no content-length header", async function() {
-            const TEST_PATH_NO_CONTENT_LENGTH = "/nocontentlength";
-            server.on({
-                method: "GET",
-                path: TEST_PATH_NO_CONTENT_LENGTH,
-                reply: {
-                    status:  200,
-                    headers: { "x-request-id": TEST_REQUEST_ID },
-                    headersOverrides: { "content-length": undefined },
-                    body:    JSON.stringify({ok: true})
-                }
-            });
+            const TEST_PATH = "/nocontentlength";
+            nockChunkedResponse(TEST_PATH);
 
-            const response = await fetch(`http://${getHost()}${TEST_PATH_NO_CONTENT_LENGTH}`);
-            await assertFetchResponse(response);
+            const response = await fetch(`http://${TEST_HOST_NOCK}${TEST_PATH}`);
+            assert.strictEqual(response.status, 200, `expected http response code 200 but got: ${response.status} ${response.statusText}`);
 
-            assertMetrics(this.metrics, {
-                path: TEST_PATH_NO_CONTENT_LENGTH
-            });
+            assertChunkedResponseMetrics(this.metrics, TEST_PATH, await response.text());
         });
 
         it("fetch http status 500", async function() {
@@ -716,6 +755,15 @@ describe("probe http-client", function() {
                 path: TEST_PATH
             });
         });
+
+        it("request http GET no content-length header", async function() {
+            const TEST_PATH = "/nocontentlength";
+            nockChunkedResponse(TEST_PATH);
+
+            const responseText = await request(`http://${TEST_HOST_NOCK}${TEST_PATH}`);
+
+            assertChunkedResponseMetrics(this.metrics, TEST_PATH, responseText);
+        });
     });
 
     describe("axios", function() {
@@ -730,7 +778,7 @@ describe("probe http-client", function() {
             });
         });
 
-        it("request https GET", async function() {
+        it("axios https GET", async function() {
             const TEST_PATH = "/test";
             mockServer("GET", TEST_PATH);
 
@@ -740,6 +788,15 @@ describe("probe http-client", function() {
                 protocol: "https",
                 path: TEST_PATH
             });
+        });
+
+        it("axios http GET no content-length header", async function() {
+            const TEST_PATH = "/nocontentlength";
+            nockChunkedResponse(TEST_PATH);
+
+            const response = await axios(`http://${TEST_HOST_NOCK}${TEST_PATH}`);
+
+            assertChunkedResponseMetrics(this.metrics, TEST_PATH, response.data);
         });
     });
 
@@ -766,6 +823,15 @@ describe("probe http-client", function() {
                 protocol: "https",
                 path: TEST_PATH
             });
+        });
+
+        it("needle http GET no content-length header", async function() {
+            const TEST_PATH = "/nocontentlength";
+            nockChunkedResponse(TEST_PATH);
+
+            const response = await needle("get", `http://${TEST_HOST_NOCK}${TEST_PATH}`);
+
+            assertChunkedResponseMetrics(this.metrics, TEST_PATH, response.body);
         });
     });
 
@@ -798,6 +864,65 @@ describe("probe http-client", function() {
                 path: TEST_PUT_PATH,
                 requestBodySize: BIG_CONTENT.length
             });
+        });
+
+        it("httptransfer http GET no content-length header", async function() {
+            const TEST_PATH = "/nocontentlength";
+            nockChunkedResponse(TEST_PATH);
+            mockFs();
+
+            await downloadFile(`http://${TEST_HOST_NOCK}${TEST_PATH}`, "test.txt");
+
+            assertChunkedResponseMetrics(this.metrics, TEST_PATH, await fs.readFile("test.txt", {encoding: "utf-8"}));
+        });
+    });
+
+    describe("@azure/core-rest-pipeline", function() {
+        it("http GET", async function () {
+            const TEST_PATH = "/test";
+            mockServer("GET", TEST_PATH);
+
+            const httpClient = createDefaultHttpClient();
+            await httpClient.sendRequest(createPipelineRequest({
+                url: `http://${getHost()}${TEST_PATH}`,
+                timeout: 500,
+                allowInsecureConnection: true
+            }));
+
+            assertMetrics(this.metrics, {
+                path: TEST_PATH
+            });
+        });
+
+        it("https GET", async function () {
+            const TEST_PATH = "/test";
+            mockServer("GET", TEST_PATH);
+
+            const httpClient = createDefaultHttpClient();
+            await httpClient.sendRequest(createPipelineRequest({
+                url: `https://${getHttpsHost()}${TEST_PATH}`,
+                timeout: 500,
+                allowInsecureConnection: true
+            }));
+
+            assertMetrics(this.metrics, {
+                protocol: "https",
+                path: TEST_PATH
+            });
+        });
+
+        it("GET no content-length header", async function () {
+            const TEST_PATH = "/nocontentlength";
+            nockChunkedResponse(TEST_PATH);
+
+            const httpClient = createDefaultHttpClient();
+            const response = await httpClient.sendRequest(createPipelineRequest({
+                url: `http://${TEST_HOST_NOCK}${TEST_PATH}`,
+                timeout: 500,
+                allowInsecureConnection: true
+            }));
+
+            assertChunkedResponseMetrics(this.metrics, TEST_PATH, response.bodyAsText);
         });
     });
 
