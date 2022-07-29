@@ -69,6 +69,47 @@ describe("metrics.js", () => {
             assert.equal(metrics.test, 1);
         });
 
+        it("should return container os and version added to existing metrics", () => {
+            mockFs({
+                '/etc/os-release': 'NAME="Ubuntu" \n VERSION_ID="22.04"'
+            });
+            const metrics = Metrics.openwhisk({ test: 1 });
+            assert.ok(typeof metrics.containerOS === "string");
+            assert.ok(typeof metrics.containerOSVersion === "string");
+            assert.equal(metrics.containerOS, "Ubuntu");
+            assert.equal(metrics.containerOSVersion, "22.04");
+            assert.equal(metrics.test, 1);
+        });
+
+        it("should return container os and version from alternate path and add to existing metrics", () => {
+            mockFs({
+                '/usr/lib/os-release': 'NAME="Ubuntu" \n VERSION_ID="22.04"'
+            });
+            const metrics = Metrics.openwhisk({ test: 1 });
+            assert.ok(typeof metrics.containerOS === "string");
+            assert.ok(typeof metrics.containerOSVersion === "string");
+            assert.equal(metrics.containerOS, "Ubuntu");
+            assert.equal(metrics.containerOSVersion, "22.04");
+            assert.equal(metrics.test, 1);
+        });
+
+        it("should ignore container os and version in metrics if unset", () => {
+            mockFs({
+                '/etc/os-release': 'INVALID_NAME="Ubuntu" \n INVALID_VERSION_ID="22.04"'
+            });
+            const metrics = Metrics.openwhisk({ test: 1 });
+            assert.ok(typeof metrics.containerOS === "undefined");
+            assert.ok(typeof metrics.containerOSVersion === "undefined");
+            assert.equal(metrics.test, 1);
+        });
+
+        it("should ignore container os and version in metrics if unavailable", () => {
+            const metrics = Metrics.openwhisk({ test: 1 });
+            assert.ok(typeof metrics.containerOS === "undefined");
+            assert.ok(typeof metrics.containerOSVersion === "undefined");
+            assert.equal(metrics.test, 1);
+        });
+
         it("should overwrite existing container size metric", () => {
             mockFs({
                 '/sys/fs/cgroup': {
