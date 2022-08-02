@@ -110,6 +110,18 @@ describe("metrics.js", () => {
             assert.equal(metrics.test, 1);
         });
 
+        it("should ignore container os and version in metrics if error occurs when gathering", () => {
+            // mock file as a directory to induce error
+            mockFs({
+                '/etc/os-release': {}
+            });
+
+            const metrics = Metrics.openwhisk({ test: 1 });
+            assert.ok(typeof metrics.containerOS === "undefined");
+            assert.ok(typeof metrics.containerOSVersion === "undefined");
+            assert.equal(metrics.test, 1);
+        });
+
         it("should overwrite existing container size metric", () => {
             mockFs({
                 '/sys/fs/cgroup': {
