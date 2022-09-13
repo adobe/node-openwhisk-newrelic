@@ -92,7 +92,7 @@ function doAssertMetrics(metrics, opts) {
     if (opts.requestBodySize !== undefined) {
         assert.strictEqual(metrics.requestBodySize, opts.requestBodySize);
     }
-    // assert.strictEqual(metrics.responseBodySize, opts.responseBodySize || 11);
+    assert.strictEqual(metrics.responseBodySize, opts.responseBodySize || 11);
     if (!opts.ignoreServerRequestId) {
         assert.strictEqual(metrics.serverRequestId, TEST_REQUEST_ID);
     }
@@ -446,14 +446,14 @@ describe("probe http-client", function() {
             });
         });
 
-        // it("node http GET no content-length header", async function() {
-        //     const TEST_PATH = "/nocontentlength";
-        //     nockChunkedResponse(TEST_PATH);
+        it("node http GET no content-length header", async function() {
+            const TEST_PATH = "/nocontentlength";
+            nockChunkedResponse(TEST_PATH);
 
-        //     const responseText = await httpRequest(http, `http://${TEST_HOST_NOCK}${TEST_PATH}`);
+            const responseText = await httpRequest(http, `http://${TEST_HOST_NOCK}${TEST_PATH}`);
 
-        //     assertChunkedResponseMetrics(this.metrics, TEST_PATH, responseText);
-        // });
+            assertChunkedResponseMetrics(this.metrics, TEST_PATH, responseText);
+        });
     });
 
     describe("fetch", function() {
