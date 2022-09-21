@@ -10,8 +10,8 @@
   "repository": "adobe/node-openwhisk-newrelic",
   "dependencies": {
     "cls-hooked": "^4.2.2",
-    "debug": "^4.1.1",
-    "dotenv": "^16.0.1",
+    "debug": "^4.3.4",
+    "dotenv": "^16.0.2",
     "node-fetch": "^2.6.7"
   },
   "devDependencies": {

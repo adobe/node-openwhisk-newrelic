@@ -89,7 +89,7 @@ async function main(params) {
     try {
         // do something
     } finally {
-        await metrics.activationFinished();
+        metrics.activationFinished();
     }
 }
 

@@ -162,7 +162,7 @@ describe("newrelic.js", function() {
 
             const metrics = new NewRelic(FAKE_PARAMS);
             await metrics.send(EVENT_TYPE, { test: "value" });
-            await metrics.activationFinished();
+            metrics.activationFinished();
 
             await MetricsTestHelper.metricsDone();
             MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
@@ -185,7 +185,7 @@ describe("newrelic.js", function() {
 
             const metrics = new NewRelic(FAKE_PARAMS);
             await metrics.send(EVENT_TYPE, { test: "value" });
-            await metrics.activationFinished();
+            metrics.activationFinished();
 
             await MetricsTestHelper.metricsDone();
             MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
@@ -205,7 +205,7 @@ describe("newrelic.js", function() {
             });
             const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
             await metrics.send(EVENT_TYPE, { test: "value" });
-            await metrics.activationFinished();
+            metrics.activationFinished();
 
             await MetricsTestHelper.metricsDone();
             MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
@@ -224,7 +224,7 @@ describe("newrelic.js", function() {
             };
             const metrics = new NewRelic(FAKE_PARAMS, defaultMetrics);
             await metrics.send(EVENT_TYPE, { test: "value" });
-            await metrics.activationFinished();
+            metrics.activationFinished();
 
             await MetricsTestHelper.metricsDone();
             MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
@@ -244,7 +244,7 @@ describe("newrelic.js", function() {
 
             const metrics = new NewRelic(FAKE_PARAMS);
             await metrics.send(EVENT_TYPE, { test: "value" });
-            await metrics.activationFinished();
+            metrics.activationFinished();
 
             await sleep(100);
             failedMetricsNock.done();
@@ -259,7 +259,7 @@ describe("newrelic.js", function() {
                 ...FAKE_PARAMS,
             });
             await metrics.send(EVENT_TYPE, { test: "value" });
-            await metrics.activationFinished();
+            metrics.activationFinished();
 
             await sleep(100);
             failedMetricsNock.done();
@@ -286,7 +286,7 @@ describe("newrelic.js", function() {
                     });
 
                     await metrics.send(EVENT_TYPE, { test: "value" });
-                    await metrics.activationFinished();
+                    metrics.activationFinished();
                 })();
             }
             await Promise.all(activations);
@@ -328,7 +328,7 @@ describe("newrelic.js", function() {
         // overwrite previously added metrics via send() metrics
         await metrics.send(EVENT_TYPE, {added: "metric3"});
 
-        await metrics.activationFinished();
+        metrics.activationFinished();
 
         await MetricsTestHelper.metricsDone();
         MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
@@ -531,7 +531,7 @@ describe("newrelic.js", function() {
 
             const metrics = new NewRelic( FAKE_PARAMS );
             await fetch("http://example.com/test");
-            await metrics.activationFinished();
+            metrics.activationFinished();
 
             await MetricsTestHelper.metricsDone();
             MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
@@ -569,7 +569,7 @@ describe("newrelic.js", function() {
                     await fetch("http://example.com/test");
                     await fetch("http://example.com/test");
 
-                    await metrics.activationFinished();
+                    metrics.activationFinished();
                 })();
             }
             await Promise.all(activations);
