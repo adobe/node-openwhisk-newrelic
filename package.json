@@ -26,7 +26,7 @@
     "eslint": "^7.1.0",
     "fs-extra": "^9.0.1",
     "license-checker": "^25.0.1",
-    "mocha": "^7.2.0",
+    "mocha": "^10.2.0",
     "mock-fs": "^4.12.0",
     "mock-http-server": "^1.4.2",
     "needle": "^2.5.0",
