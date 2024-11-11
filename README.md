@@ -146,21 +146,21 @@ const metrics = new NewRelic({
 
 Sent for all metrics.
 
-| Attribute         | Format           | Description                     |
-|-------------------|------------------|---------------------------------|
-| `eventType`       | string           | Event type, required, [standard New Relic Insights type](https://docs.newrelic.com/docs/insights/insights-data-sources/custom-data/insights-custom-data-requirements-limits). |
+| Attribute         | Format           | Description                                                                                                                                                                                            |
+|-------------------|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `eventType`       | string           | Event type, required, [standard New Relic Insights type](https://docs.newrelic.com/docs/insights/insights-data-sources/custom-data/insights-custom-data-requirements-limits).                          |
 | `timestamp`       | utc millis (?)   | The UTC timestamp to associate with the event. [Standard New Relic Insights type](https://docs.newrelic.com/docs/insights/insights-data-sources/custom-data/insights-custom-data-requirements-limits). |
-| `namespace`       | string           | OpenWhisk namespace of the action that sent the event. |
-| `package`         | string           | OpenWhisk package name of the action that sent the event.  |
-| `actionName`      | string           | OpenWhisk action name (without package) of the action that sent the event. |
-| `activationId`    | string           | OpenWhisk activation id of the action that sent the event. |
-| `cloud`           | string           | Cloud in which the activation ran, e.g. `aws` or `azure` (`__OW_CLOUD`). |
-| `region`          | string           | Region in which the activation ran, e.g. `us-east-1` (`__OW_REGION`). |
-| `transactionId`   | string           | OpenWhisk transaction id (`__OW_TRANSACTION_ID`). |
-| `activationHost`  | string           | Hostname where the activation ran (`HOSTNAME` env var). |
-| `activationContainerName`  | string  | Container name where the activation ran (`MESOS_CONTAINER_NAME` env var). |
-| `nodeVersion`     | string           | Nodejs version on which the action ran, e.g. `13.12.0`. |
-| `containerMemorySize`  | number  | Container memory size found in `/sys/fs/cgroup/memory/memory.limit_in_bytes`|
+| `namespace`       | string           | OpenWhisk namespace of the action that sent the event.                                                                                                                                                 |
+| `package`         | string           | OpenWhisk package name of the action that sent the event.                                                                                                                                              |
+| `actionName`      | string           | OpenWhisk action name (without package) of the action that sent the event.                                                                                                                             |
+| `activationId`    | string           | OpenWhisk activation id of the action that sent the event.                                                                                                                                             |
+| `cloud`           | string           | Cloud in which the activation ran, e.g. `aws` or `azure` (`__OW_CLOUD`).                                                                                                                               |
+| `region`          | string           | Region in which the activation ran, e.g. `us-east-1` (`__OW_REGION`).                                                                                                                                  |
+| `transactionId`   | string           | OpenWhisk transaction id (`__OW_TRANSACTION_ID`).                                                                                                                                                      |
+| `activationHost`  | string           | Hostname where the activation ran (`HOSTNAME` env var).                                                                                                                                                |
+| `activationContainerName`  | string  | Container name where the activation ran (`MESOS_CONTAINER_NAME` env var).                                                                                                                              |
+| `nodeVersion`     | string           | Nodejs version on which the action ran, e.g. `13.12.0`.                                                                                                                                                |
+| `containerMemorySize`  | number  | Container memory size found in `/sys/fs/cgroup/memory.max`                                                                                                                                             |
 
 ### Http
 
