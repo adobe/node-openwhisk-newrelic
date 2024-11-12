@@ -20,3 +20,12 @@ index cdeb51f..1e08d36 100644
  		const url = `${base}slow`;
  		const opts = {
  			timeout: 20
+@@ -1569,7 +1569,7 @@
+ 		});
+ 	});
+
+-	it('should not forward secure headers to 3th party', () => {
++	it.skip('should not forward secure headers to 3th party', () => {
+ 		return fetch(`${base}redirect-to/302/https://httpbin.org/get`, {
+ 			headers: new Headers({
+ 				cookie: 'gets=removed',
