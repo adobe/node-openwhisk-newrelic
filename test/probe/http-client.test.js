@@ -197,15 +197,12 @@ function assertChunkedResponseMetrics(metrics, path, responseText) {
 
 describe("probe http-client", function() {
     let server;
-    console.log('starting probe http-client')
     before(async function() {
         // dynamically create self-signed certificate for mock server
-        console.log('before SSL_KEYS')
         const SSL_KEYS = await pem.createCertificate({ days: 1, selfSigned: true });
         // make client requests not validate self-signed server certificate
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 
-        console.log('SSL_KEYS -> ',SSL_KEYS)
         server = new ServerMock({
             host: "localhost"
         }, {
