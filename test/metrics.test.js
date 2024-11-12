@@ -45,9 +45,7 @@ describe("metrics.js", () => {
         it("should return container memory size", () => {
             mockFs({
                 '/sys/fs/cgroup': {
-                    'memory': {
-                        'memory.limit_in_bytes': '9999'
-                    }
+                    'memory.max': '9999'
                 }
             });
             const containerMemorySize = Metrics.openwhisk().containerMemorySize;
@@ -58,9 +56,7 @@ describe("metrics.js", () => {
         it("should return container memory size added to existing metrics", () => {
             mockFs({
                 '/sys/fs/cgroup': {
-                    'memory': {
-                        'memory.limit_in_bytes': '9999'
-                    }
+                    'memory.max': '9999'
                 }
             });
             const metrics = Metrics.openwhisk({ test: 1 });
@@ -125,9 +121,7 @@ describe("metrics.js", () => {
         it("should overwrite existing container size metric", () => {
             mockFs({
                 '/sys/fs/cgroup': {
-                    'memory': {
-                        'memory.limit_in_bytes': '9999'
-                    }
+                    'memory.max': '9999'
                 }
             });
             const containerMemorySize = Metrics.openwhisk({ containerMemorySize: 1 }).containerMemorySize;
@@ -143,9 +137,7 @@ describe("metrics.js", () => {
         it("should return undefined if the file is malformed", () => {
             mockFs({
                 '/sys/fs/cgroup': {
-                    'memory': {
-                        'memory.limit_in_bytes': 'ksekfgfbnsy'
-                    }
+                    'memory.max': 'ksekfgfbnsy'
                 }
             });
             let containerMemorySize = Metrics.openwhisk().containerMemorySize;
@@ -153,10 +145,8 @@ describe("metrics.js", () => {
 
             mockFs({
                 '/sys/fs/cgroup': {
-                    'memory': {
-                        'memory.limit_in_bytes': {
-                            'hello': '1'
-                        }
+                    'memory.max': {
+                        'hello': '1'
                     }
                 }
             });

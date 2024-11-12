@@ -176,9 +176,7 @@ describe("newrelic.js", function() {
             mockFs();
             mockFs({
                 '/sys/fs/cgroup': {
-                    'memory': {
-                        'memory.limit_in_bytes': '9999'
-                    }
+                    'memory.max': '9999'
                 }
             });
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
