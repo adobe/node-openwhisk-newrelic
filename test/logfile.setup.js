@@ -57,14 +57,23 @@ async function fileOpen(path) {
         throw err;
     }
 }
-function fileWrite(fd, data) {
+async function fileWrite(fd, data) {
     const buffer = Buffer.from(data);
-    fsBinding.writeBuffer(fd, buffer, 0, buffer.length, null, undefined, {});
+    await fs.write(fd, buffer);
 }
 
-function fileClose(fd) {
-    fsBinding.close(fd, undefined, {});
+async function fileClose(fd) {
+    await fs.close(fd);
 }
+
+// function fileWrite(fd, data) {
+//     const buffer = Buffer.from(data);
+//     fsBinding.writeBuffer(fd, buffer, 0, buffer.length, null, undefined, {});
+// }
+
+// function fileClose(fd) {
+//     fsBinding.close(fd, undefined, {});
+// }
 
 // ---------------------------------------------------------------------
 
@@ -89,18 +98,18 @@ before(async function() {
     // make available globally for e.g. child process output
     global.mochaLogFile = logFile;
 
-    console.log = function(...args) {
+    console.log = async function(...args) {
         if (global.disableMochaLogFile) {
             process.stdout.write(util.format(...args));
         } else {
-            fileWrite(logFile, util.format(...args) + "\n");
+            await fileWrite(logFile, util.format(...args) + "\n");
         }
     };
-    console.error = function(...args) {
+    console.error = async function(...args) {
         if (global.disableMochaLogFile) {
             process.stderr.write(util.format(...args));
         } else {
-            fileWrite(logFile, util.format(...args) + "\n");
+            await fileWrite(logFile, util.format(...args) + "\n");
         }
     };
     console.info = console.log;
@@ -125,8 +134,8 @@ afterEach(function() {
     console.log();
 });
 
-after(function() {
-    fileClose(logFile);
+after(async function() {
+    await fileClose(logFile);
     console.log = originalConsole.log;
     console.error = originalConsole.error;
     console.info = originalConsole.info;
