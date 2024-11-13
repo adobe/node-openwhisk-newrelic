@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [10.x, 12.x, 14.x, latest]
+        node-version: [14.x, 'lts/*', latest]
 
     steps:
     - uses: actions/checkout@v2
@@ -25,7 +25,7 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm ci
+    - run: npm install
     - run: npm test
     - run: npm run report-coverage
 

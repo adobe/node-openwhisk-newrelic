@@ -38,20 +38,42 @@ const fsExtra = require('fs-extra');
 
 const fsBinding = clone(process.binding('fs'));
 
-function fileOpen(path) {
-    // overwrite = 1537,
-    // append = 521
-    return fsBinding.open(path, 1537, 438, undefined, { path: path });
-}
+// function fileOpen(path) {
+//     // overwrite = 1537,
+//     // append = 521
+//     return fsBinding.open(path, 1537, 438, undefined, { path: path });
+// }
 
-function fileWrite(fd, data) {
+
+const fs = require('fs').promises;
+
+async function fileOpen(path) {
+    try {
+        // O_WRONLY | O_CREAT | O_TRUNC = 1537 (0o600)
+        const fileHandle = await fs.open(path, 'w', 0o600);
+        return fileHandle;
+    } catch (err) {
+        console.error('Failed to open file:', err);
+        throw err;
+    }
+}
+async function fileWrite(fd, data) {
     const buffer = Buffer.from(data);
-    fsBinding.writeBuffer(fd, buffer, 0, buffer.length, null, undefined, {});
+    await fs.write(fd, buffer);
 }
 
-function fileClose(fd) {
-    fsBinding.close(fd, undefined, {});
+async function fileClose(fd) {
+    await fs.close(fd);
 }
+
+// function fileWrite(fd, data) {
+//     const buffer = Buffer.from(data);
+//     fsBinding.writeBuffer(fd, buffer, 0, buffer.length, null, undefined, {});
+// }
+
+// function fileClose(fd) {
+//     fsBinding.close(fd, undefined, {});
+// }
 
 // ---------------------------------------------------------------------
 
@@ -63,7 +85,7 @@ const originalConsole = {
     debug: console.debug
 };
 
-before(function() {
+before(async function() {
     console.log(`Log output in '${TEST_LOG_FILE}'. To log on stdout, run 'npm test -- -v'.`);
     console.log();
     process.on('exit', function() {
@@ -72,22 +94,22 @@ before(function() {
     });
 
     fsExtra.mkdirsSync(path.dirname(TEST_LOG_FILE));
-    logFile = fileOpen(TEST_LOG_FILE);
+    logFile = await fileOpen(TEST_LOG_FILE);
     // make available globally for e.g. child process output
     global.mochaLogFile = logFile;
 
-    console.log = function(...args) {
+    console.log = async function(...args) {
         if (global.disableMochaLogFile) {
             process.stdout.write(util.format(...args));
         } else {
-            fileWrite(logFile, util.format(...args) + "\n");
+            await fileWrite(logFile, util.format(...args) + "\n");
         }
     };
-    console.error = function(...args) {
+    console.error = async function(...args) {
         if (global.disableMochaLogFile) {
             process.stderr.write(util.format(...args));
         } else {
-            fileWrite(logFile, util.format(...args) + "\n");
+            await fileWrite(logFile, util.format(...args) + "\n");
         }
     };
     console.info = console.log;
@@ -112,8 +134,8 @@ afterEach(function() {
     console.log();
 });
 
-after(function() {
-    fileClose(logFile);
+after(async function() {
+    await fileClose(logFile);
     console.log = originalConsole.log;
     console.error = originalConsole.error;
     console.info = originalConsole.info;

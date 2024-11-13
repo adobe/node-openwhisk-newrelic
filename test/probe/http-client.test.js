@@ -197,7 +197,6 @@ function assertChunkedResponseMetrics(metrics, path, responseText) {
 
 describe("probe http-client", function() {
     let server;
-
     before(async function() {
         // dynamically create self-signed certificate for mock server
         const SSL_KEYS = await pem.createCertificate({ days: 1, selfSigned: true });
