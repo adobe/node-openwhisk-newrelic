@@ -197,7 +197,7 @@ describe("newrelic.js", function() {
             mockFs.restore();
         });
 
-        it("sendMetrics with container memory from CGROUPV2 size in default metrics", async function() {
+        it("sendMetrics with container memory size from CGROUPV2 in default metrics", async function() {
             mockFs();
             mockFs({
                 '/sys/fs/cgroup': {
