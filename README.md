@@ -3,7 +3,7 @@
 
 # node-openwhisk-newrelic
 
-Library for gathering metrics from Apache OpenWhisk actions and sending them to New Relic Insights.
+Library for gathering metrics from Apache OpenWhisk actions and sending them to New Relic Insights. 
 
 ## NewRelic Insert API JSON format guidelines
 
