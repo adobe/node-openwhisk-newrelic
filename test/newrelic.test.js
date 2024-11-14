@@ -197,6 +197,29 @@ describe("newrelic.js", function() {
             mockFs.restore();
         });
 
+        it("sendMetrics with container memory size from CGROUPV2 in default metrics", async function() {
+            mockFs();
+            mockFs({
+                '/sys/fs/cgroup': {
+                    'memory.max': '9999'
+                }
+            });
+            const receivedMetrics = MetricsTestHelper.mockNewRelic();
+
+            const metrics = new NewRelic(FAKE_PARAMS);
+            await metrics.send(EVENT_TYPE, { test: "value" });
+            metrics.activationFinished();
+
+            await MetricsTestHelper.metricsDone();
+            MetricsTestHelper.assertArrayMatches(receivedMetrics, [{
+                ...EXPECTED_METRICS,
+                containerMemorySize: 9999,
+                eventType: EVENT_TYPE,
+                test: "value"
+            }]);
+            mockFs.restore();
+        });
+
         it("sendMetrics - default metrics frozen object", async function() {
             const receivedMetrics = MetricsTestHelper.mockNewRelic();
 

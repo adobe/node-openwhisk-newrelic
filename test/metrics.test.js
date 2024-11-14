@@ -55,12 +55,35 @@ describe("metrics.js", () => {
             assert.equal(containerMemorySize, 9999);
         });
 
+        it("should return container memory size from CGROUPV2", () => {
+            mockFs({
+                '/sys/fs/cgroup': {
+                    'memory.max': '9999'
+                }
+            });
+            const containerMemorySize = Metrics.openwhisk().containerMemorySize;
+            assert.ok(typeof containerMemorySize === "number");
+            assert.equal(containerMemorySize, 9999);
+        });
+
         it("should return container memory size added to existing metrics", () => {
             mockFs({
                 '/sys/fs/cgroup': {
                     'memory': {
                         'memory.limit_in_bytes': '9999'
                     }
+                }
+            });
+            const metrics = Metrics.openwhisk({ test: 1 });
+            assert.ok(typeof metrics.containerMemorySize === "number");
+            assert.equal(metrics.containerMemorySize, 9999);
+            assert.equal(metrics.test, 1);
+        });
+
+        it("should return container memory size from CGROUPV2 added to existing metrics", () => {
+            mockFs({
+                '/sys/fs/cgroup': {
+                    'memory.max': '9999'
                 }
             });
             const metrics = Metrics.openwhisk({ test: 1 });
@@ -135,6 +158,17 @@ describe("metrics.js", () => {
             assert.equal(containerMemorySize, 9999);
         });
 
+        it("should overwrite existing container size metric from CGROUPV2", () => {
+            mockFs({
+                '/sys/fs/cgroup': {
+                    'memory.max': '9999'
+                }
+            });
+            const containerMemorySize = Metrics.openwhisk({ containerMemorySize: 1 }).containerMemorySize;
+            assert.ok(typeof containerMemorySize === "number");
+            assert.equal(containerMemorySize, 9999);
+        });
+
         it("should return undefined if not running in the context of docker container", () => {
             const containerMemorySize = Metrics.openwhisk().containerMemorySize;
             assert.equal(containerMemorySize, undefined);
@@ -157,6 +191,26 @@ describe("metrics.js", () => {
                         'memory.limit_in_bytes': {
                             'hello': '1'
                         }
+                    }
+                }
+            });
+            containerMemorySize = Metrics.openwhisk().containerMemorySize;
+            assert.equal(containerMemorySize, undefined);
+        });
+
+        it("should return undefined if the CGROUPV2 file is malformed", () => {
+            mockFs({
+                '/sys/fs/cgroup': {
+                    'memory.max': 'ksekfgfbnsy'
+                }
+            });
+            let containerMemorySize = Metrics.openwhisk().containerMemorySize;
+            assert.equal(containerMemorySize, undefined);
+
+            mockFs({
+                '/sys/fs/cgroup': {
+                    'memory.max': {
+                        'hello': '1'
                     }
                 }
             });
